@@ -1,0 +1,27 @@
+package database
+
+const (
+	tripsTable = `CREATE TABLE IF NOT EXISTS trips (
+		id SERIAL PRIMARY KEY,
+		user_id INTEGER NOT NULL,
+		title VARCHAR(255) NOT NULL,
+		description TEXT,
+		is_active BOOLEAN DEFAULT true,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	)`
+
+	waypointsTable = `CREATE TABLE IF NOT EXISTS waypoints (
+		id SERIAL PRIMARY KEY,
+		trip_id INTEGER REFERENCES trips(id) ON DELETE CASCADE,
+		lat DOUBLE PRECISION NOT NULL,
+		lon DOUBLE PRECISION NOT NULL,
+		note TEXT,
+		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	)`
+
+	photosTable = `CREATE TABLE IF NOT EXISTS photos (
+		id SERIAL PRIMARY KEY,
+		waypoint_id INTEGER REFERENCES waypoints(id) ON DELETE CASCADE,
+		url TEXT NOT NULL
+	)`
+)

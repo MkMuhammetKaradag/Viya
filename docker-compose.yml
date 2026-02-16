@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  viya-db:
+    image: pgvector/pgvector:pg15-trixie
+    container_name: viya-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

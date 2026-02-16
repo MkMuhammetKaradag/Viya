@@ -1,8 +1,8 @@
 package main
 
 import (
-	"trip-service/app"
-	"trip-service/config"
+	"trip-service/internal/app"
+	"trip-service/internal/config"
 )
 
 func main() {
