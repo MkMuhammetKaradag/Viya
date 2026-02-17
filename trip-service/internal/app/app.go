@@ -7,25 +7,29 @@ import (
 	"trip-service/internal/database"
 	"trip-service/internal/domain"
 
+	httptransport "trip-service/internal/transport/http"
+
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 type App struct {
-	config config.Config
+	config    config.Config
+	registrar RouteRegistrar
 	// Add your application fields here
 }
 
 func NewApp(cfg config.Config) (*App, error) {
-	_, err := buildContainer(cfg)
+	c, err := buildContainer(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap failed: %w", err)
 	}
-	return &App{config: cfg}, nil
+	return &App{config: cfg, registrar: c.httpRouter}, nil
 }
 
 type container struct {
-	tripRepo domain.TripRepository
+	tripRepo   domain.TripRepository
+	httpRouter RouteRegistrar
 }
 
 func buildContainer(cfg config.Config) (*container, error) {
@@ -33,9 +37,10 @@ func buildContainer(cfg config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
-
+	httpRouter := setupHttpRouter(cfg, repo)
 	return &container{
-		tripRepo: repo,
+		tripRepo:   repo,
+		httpRouter: httpRouter,
 	}, nil
 }
 func getServerConfig(cfg config.Config) AppConfig {
@@ -61,6 +66,9 @@ type AppConfig struct {
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 }
+type RouteRegistrar interface {
+	Register(app *fiber.App)
+}
 
 func (a *App) Run() error {
 	cfg := getServerConfig(a.config)
@@ -78,6 +86,10 @@ func (a *App) Run() error {
 		AllowMethods:     []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH"},
 		AllowCredentials: true,
 	}))
+
+	if a.registrar != nil {
+		a.registrar.Register(app)
+	}
 	app.Get("/health", func(c fiber.Ctx) error {
 		// return c.SendString("OK")
 		return c.JSON(fiber.Map{
@@ -88,4 +100,10 @@ func (a *App) Run() error {
 
 	return app.Listen(cfg.Port)
 
+}
+
+func setupHttpRouter(cfg config.Config, r domain.TripRepository) RouteRegistrar {
+
+	httpHandlers := httptransport.NewHandlers(r)
+	return httptransport.NewRouter(httpHandlers)
 }
