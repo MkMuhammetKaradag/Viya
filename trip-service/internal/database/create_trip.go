@@ -11,7 +11,7 @@ func (r *Repository) CreateTrip(ctx context.Context, trip *domain.Trip) (uuid.UU
 	query := `
 	     INSERT INTO trips (user_id,title,description,is_active)
 		VALUES ($1,$2,$3,$4)
-		RETURNING id,
+		RETURNING id
 	`
 
 	var newID uuid.UUID

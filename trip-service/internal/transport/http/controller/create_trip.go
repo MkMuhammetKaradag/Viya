@@ -2,18 +2,20 @@ package controller
 
 import (
 	"fmt"
+	"trip-service/internal/domain"
+	"trip-service/internal/transport/http/usecase"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 )
 
 type CreateTripRequest struct {
-	UserID   uuid.UUID `json:"user_id"`
-	ID       uuid.UUID `params:"id,omitempty" validate:"required" `
-	Search   string    `query:"search,omitempty"`
-	Title    string    `json:"title" validate:"required,min=3"`
-	Desc     string    `json:"desc,omitempty"`
-	IsActive bool      `json:"is_active"`
+	UserID uuid.UUID `json:"user_id"`
+	// ID       uuid.UUID `params:"id,omitempty" validate:"required" `
+	// Search   string    `query:"search,omitempty"`
+	Title    string `json:"title" validate:"required,min=3"`
+	Desc     string `json:"desc,omitempty"`
+	IsActive bool   `json:"is_active"`
 }
 
 type CreateTripResponse struct {
@@ -21,17 +23,29 @@ type CreateTripResponse struct {
 }
 
 type CreateTripController struct {
+	usecase usecase.CreateTripUseCase
 }
 
-func NewCreateTripController() *CreateTripController {
-	return &CreateTripController{}
+func NewCreateTripController(usecase usecase.CreateTripUseCase) *CreateTripController {
+	return &CreateTripController{
+		usecase: usecase,
+	}
 }
 
 func (c *CreateTripController) Handle(fiberCtx fiber.Ctx, req *CreateTripRequest) (*CreateTripResponse, error) {
 	// Burada UseCase'i çağırıp trip oluşturma işlemini yapacağız
 	// Şimdilik sadece dummy response dönüyoruz
-	cookie := fiberCtx.Cookies("session_id")
-	fmt.Println("cookie", cookie)
-	fmt.Println("data", req)
-	return &CreateTripResponse{Message: "Trip created successfully!"}, nil
+
+	tripModel := &domain.Trip{
+		UserID:      req.UserID,
+		Title:       req.Title,
+		Description: req.Desc,
+		IsActive:    req.IsActive,
+	}
+
+	id, err := c.usecase.Execute(fiberCtx.Context(), tripModel)
+	if err != nil {
+		return nil, err
+	}
+	return &CreateTripResponse{Message: fmt.Sprintf("trip id %s", id)}, nil
 }

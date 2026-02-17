@@ -3,6 +3,7 @@ package http
 import (
 	"trip-service/internal/domain"
 	"trip-service/internal/transport/http/controller"
+	"trip-service/internal/transport/http/usecase"
 )
 
 type Handlers struct {
@@ -17,7 +18,7 @@ func NewHandlers(repo domain.TripRepository) *Handlers {
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
-			Create: controller.NewCreateTripController(),
+			Create: controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
 		},
 	}
 }
