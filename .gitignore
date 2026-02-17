@@ -7,6 +7,8 @@
 *.so
 *.dylib
 bin/
+*.txt
+
 
 # Dependency directories
 vendor/
