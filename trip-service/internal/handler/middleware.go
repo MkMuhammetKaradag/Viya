@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"trip-service/internal/database"
 
 	"github.com/go-playground/validator/v10"
@@ -40,6 +41,7 @@ func HandleWithFiber[R Request, Res Response](handler FiberHandler[R, Res]) fibe
 		var req R
 
 		if err := parseRequest(c, &req); err != nil {
+			
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
@@ -61,16 +63,21 @@ func HandleWithFiber[R Request, Res Response](handler FiberHandler[R, Res]) fibe
 }
 func parseRequest[R any](c fiber.Ctx, req *R) error {
 
-	if err := c.Bind().Body(req); err != nil {
-		return err
-	}
 	if err := c.Bind().Query(req); err != nil {
+		fmt.Println("err query", err)
 		return err
 	}
 	if err := c.Bind().URI(req); err != nil {
+		fmt.Println("uri err", err)
 		return err
 	}
+	if err := c.Bind().Body(req); err != nil {
+		fmt.Println("bosy err ", err)
+		return err
+	}
+
 	if err := c.Bind().Header(req); err != nil {
+		fmt.Println("header err", err)
 		return err
 	}
 	return nil

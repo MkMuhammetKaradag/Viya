@@ -16,7 +16,8 @@ type tripHandlers struct {
 }
 
 type waypointHandlers struct {
-	Add *controller.AddWayPointController
+	Add       *controller.AddWayPointController
+	AddPhotos *controller.AddWayPointPhotosController
 }
 
 func NewHandlers(repo domain.TripRepository) *Handlers {
@@ -26,7 +27,8 @@ func NewHandlers(repo domain.TripRepository) *Handlers {
 			Create: controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
-			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo)),
+			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo)),
+			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo)),
 		},
 	}
 }

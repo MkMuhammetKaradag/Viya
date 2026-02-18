@@ -30,6 +30,7 @@ func (r *Router) Register(app *fiber.App) {
 	waypoints := api.Group("/waypoints")
 	{
 		waypoints.Post("/", handler.HandleWithFiber[controller.AddWayPointRequest, controller.AddWayPointResponse](h.WayPoint.Add))
+		waypoints.Post("/:waypoint_id/photos", handler.HandleWithFiber[controller.AddWayPointPhotosRequest, controller.AddWayPointPhotosResponse](h.WayPoint.AddPhotos))
 	}
 
 }
