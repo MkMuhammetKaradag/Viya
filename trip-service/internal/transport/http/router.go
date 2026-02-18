@@ -26,4 +26,10 @@ func (r *Router) Register(app *fiber.App) {
 		trips.Post("/", handler.HandleWithFiber[controller.CreateTripRequest, controller.CreateTripResponse](h.Trip.Create))
 	}
 
+	// WAYPOINTS
+	waypoints := api.Group("/waypoints")
+	{
+		waypoints.Post("/", handler.HandleWithFiber[controller.AddWayPointRequest, controller.AddWayPointResponse](h.WayPoint.Add))
+	}
+
 }

@@ -15,7 +15,7 @@ type createTripUseCase struct {
 	tripRepo domain.TripRepository
 }
 
-func NewCreateTripUseCase(tripRepo domain.TripRepository) *createTripUseCase {
+func NewCreateTripUseCase(tripRepo domain.TripRepository) CreateTripUseCase {
 	return &createTripUseCase{tripRepo: tripRepo}
 }
 

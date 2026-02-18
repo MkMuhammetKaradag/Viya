@@ -8,6 +8,6 @@ import (
 
 type TripRepository interface {
 	CreateTrip(ctx context.Context, trip *Trip) (uuid.UUID, error)
-	AddWaypoint(ctx context.Context, wp *Waypoint, photos []string) error
+	AddWaypoint(ctx context.Context, wp *Waypoint) (uuid.UUID, error)
 	Close() error
 }
