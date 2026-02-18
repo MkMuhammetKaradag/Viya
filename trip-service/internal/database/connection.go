@@ -8,7 +8,7 @@ import (
 	"trip-service/internal/config"
 )
 
-func newPostgresDB(cfg config.Config) (*sql.DB, error) {
+func newPostgresDB(cfg *config.Config) (*sql.DB, error) {
 	conn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		cfg.DB.User,

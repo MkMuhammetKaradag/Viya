@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"trip-service/internal/app"
 	"trip-service/internal/config"
 )
 
 func main() {
-	cfg, _ := config.Read()
+	cfg, err := config.Load()
+	if err != nil {
+		panic(fmt.Errorf("config load error: %w", err))
+	}
+	fmt.Println("config", cfg)
 	app, err := app.NewApp(cfg)
 	if err != nil {
 		panic(err)

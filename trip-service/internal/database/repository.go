@@ -17,7 +17,7 @@ type Repository struct {
 	db *sql.DB
 }
 
-func NewRepository(cfg config.Config) (domain.TripRepository, error) {
+func NewRepository(cfg *config.Config) (domain.TripRepository, error) {
 	db, err := newPostgresDB(cfg)
 	if err != nil {
 		return nil, err

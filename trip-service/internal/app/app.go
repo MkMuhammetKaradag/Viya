@@ -14,12 +14,12 @@ import (
 )
 
 type App struct {
-	config    config.Config
+	config    *config.Config
 	registrar RouteRegistrar
 	// Add your application fields here
 }
 
-func NewApp(cfg config.Config) (*App, error) {
+func NewApp(cfg *config.Config) (*App, error) {
 	c, err := buildContainer(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap failed: %w", err)
@@ -32,7 +32,7 @@ type container struct {
 	httpRouter RouteRegistrar
 }
 
-func buildContainer(cfg config.Config) (*container, error) {
+func buildContainer(cfg *config.Config) (*container, error) {
 	repo, err := initStorage(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
@@ -43,7 +43,7 @@ func buildContainer(cfg config.Config) (*container, error) {
 		httpRouter: httpRouter,
 	}, nil
 }
-func getServerConfig(cfg config.Config) AppConfig {
+func getServerConfig(cfg *config.Config) AppConfig {
 	return AppConfig{
 		Port:         cfg.Server.Port,
 		IdleTimeout:  5 * time.Second,
@@ -51,7 +51,7 @@ func getServerConfig(cfg config.Config) AppConfig {
 		WriteTimeout: 10 * time.Second,
 	}
 }
-func initStorage(cfg config.Config) (domain.TripRepository, error) {
+func initStorage(cfg *config.Config) (domain.TripRepository, error) {
 	repo, err := database.NewRepository(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("postgres init error: %w", err)
@@ -102,7 +102,7 @@ func (a *App) Run() error {
 
 }
 
-func setupHttpRouter(cfg config.Config, r domain.TripRepository) RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository) RouteRegistrar {
 
 	httpHandlers := httptransport.NewHandlers(r)
 	return httptransport.NewRouter(httpHandlers)
