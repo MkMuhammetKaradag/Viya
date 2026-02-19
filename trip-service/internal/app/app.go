@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"time"
 	"trip-service/infrastructure/img"
+	"trip-service/infrastructure/worker"
 	"trip-service/internal/config"
 	"trip-service/internal/database"
 	"trip-service/internal/domain"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/hibiken/asynq"
 )
 
 type App struct {
@@ -42,7 +45,18 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, err
 	}
-	httpRouter := setupHttpRouter(cfg, repo, imgSvc)
+	redisOpt := asynq.RedisClientOpt{Addr: "localhost:6379", DB: 2}
+	asynqClient := asynq.NewClient(redisOpt)
+	wrk := worker.NewWorker(asynqClient)
+
+	processor := worker.NewTaskProcessor(redisOpt, repo, imgSvc)
+	go func() {
+		if err := processor.Start(); err != nil {
+			log.Printf("Task Processor error: %v", err)
+		}
+	}()
+
+	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
 		tripRepo:   repo,
 		httpRouter: httpRouter,
@@ -107,8 +121,8 @@ func (a *App) Run() error {
 
 }
 
-func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService) RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker) RouteRegistrar {
 
-	httpHandlers := httptransport.NewHandlers(r, i)
+	httpHandlers := httptransport.NewHandlers(r, i, w)
 	return httptransport.NewRouter(httpHandlers)
 }

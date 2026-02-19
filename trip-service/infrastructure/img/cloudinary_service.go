@@ -59,8 +59,18 @@ func (s *CloudinaryService) DeleteImage(ctx context.Context, wayPointID string) 
 func (s *CloudinaryService) UploadImageFromBytes(ctx context.Context, data []byte, opts domain.UploadOptions) (string, error) {
 
 	reader := bytes.NewReader(data)
-	public := opts.WayPointID + "_" + fmt.Sprintf("%d", time.Now().Unix())
+	public := fmt.Sprintf("%s_%d", opts.WayPointID, time.Now().UnixNano())
+	if opts.Transformation == "" {
+		if opts.Width == 0 {
+			opts.Width = 800
+		}
+		if opts.Height == 0 {
+			opts.Height = 600
+		}
 
+		opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", opts.Width, opts.Height)
+	}
+	fmt.Println("gelen ", opts.WayPointID)
 	uploadRes, err := s.client.Upload.Upload(ctx, reader, uploader.UploadParams{
 		Folder:         opts.Folder,
 		PublicID:       public,
@@ -68,7 +78,9 @@ func (s *CloudinaryService) UploadImageFromBytes(ctx context.Context, data []byt
 	})
 
 	if err != nil {
+		fmt.Println("err.", err)
 		return "", err
 	}
+	fmt.Println("res:", uploadRes)
 	return uploadRes.SecureURL, nil
 }

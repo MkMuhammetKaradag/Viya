@@ -20,7 +20,7 @@ type waypointHandlers struct {
 	AddPhotos *controller.AddWayPointPhotosController
 }
 
-func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService) *Handlers {
+func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker) *Handlers {
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
@@ -28,7 +28,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService) *Handle
 		},
 		WayPoint: &waypointHandlers{
 			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo)),
-			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc)),
+			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
 		},
 	}
 }
