@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"time"
+	"trip-service/infrastructure/img"
 	"trip-service/internal/config"
 	"trip-service/internal/database"
 	"trip-service/internal/domain"
@@ -37,7 +38,11 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
-	httpRouter := setupHttpRouter(cfg, repo)
+	imgSvc, err := img.NewCloudinaryService(cfg.Cloudinary.CloudName, cfg.Cloudinary.APIKey, cfg.Cloudinary.APISecret)
+	if err != nil {
+		return nil, err
+	}
+	httpRouter := setupHttpRouter(cfg, repo, imgSvc)
 	return &container{
 		tripRepo:   repo,
 		httpRouter: httpRouter,
@@ -102,8 +107,8 @@ func (a *App) Run() error {
 
 }
 
-func setupHttpRouter(cfg *config.Config, r domain.TripRepository) RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService) RouteRegistrar {
 
-	httpHandlers := httptransport.NewHandlers(r)
+	httpHandlers := httptransport.NewHandlers(r, i)
 	return httptransport.NewRouter(httpHandlers)
 }

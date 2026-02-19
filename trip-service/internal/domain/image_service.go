@@ -9,7 +9,7 @@ type UploadOptions struct {
 	Folder         string
 	Width          int
 	Height         int
-	PublicID       string
+	WayPointID     string
 	Transformation string
 }
 type ImageService interface {

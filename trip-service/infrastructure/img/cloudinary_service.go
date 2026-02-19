@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 	"trip-service/internal/domain"
 
 	"mime/multipart"
@@ -38,7 +39,7 @@ func (s *CloudinaryService) UploadImage(ctx context.Context, fileHeader *multipa
 
 	uploadRes, err := s.client.Upload.Upload(ctx, file, uploader.UploadParams{
 		Folder:         opts.Folder,
-		PublicID:       opts.PublicID,
+		PublicID:       opts.WayPointID,
 		Overwrite:      api.Bool(true),
 		Invalidate:     api.Bool(true),
 		Transformation: opts.Transformation,
@@ -49,19 +50,20 @@ func (s *CloudinaryService) UploadImage(ctx context.Context, fileHeader *multipa
 	}
 	return uploadRes.SecureURL, uploadRes.PublicID, nil
 }
-func (s *CloudinaryService) DeleteImage(ctx context.Context, publicID string) error {
+func (s *CloudinaryService) DeleteImage(ctx context.Context, wayPointID string) error {
 	_, err := s.client.Upload.Destroy(ctx, uploader.DestroyParams{
-		PublicID: publicID,
+		PublicID: wayPointID,
 	})
 	return err
 }
 func (s *CloudinaryService) UploadImageFromBytes(ctx context.Context, data []byte, opts domain.UploadOptions) (string, error) {
 
 	reader := bytes.NewReader(data)
+	public := opts.WayPointID + "_" + fmt.Sprintf("%d", time.Now().Unix())
 
 	uploadRes, err := s.client.Upload.Upload(ctx, reader, uploader.UploadParams{
 		Folder:         opts.Folder,
-		PublicID:       opts.PublicID,
+		PublicID:       public,
 		Transformation: opts.Transformation,
 	})
 
