@@ -24,6 +24,7 @@ func (r *Router) Register(app *fiber.App) {
 	trips := api.Group("/trips")
 	{
 		trips.Post("/", handler.HandleWithFiber[controller.CreateTripRequest, controller.CreateTripResponse](h.Trip.Create))
+		trips.Get("/:trip_id", handler.HandleWithFiber[controller.GetTripRequest, controller.GetTripResponse](h.Trip.Get))
 	}
 
 	// WAYPOINTS

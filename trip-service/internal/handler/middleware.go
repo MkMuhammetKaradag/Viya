@@ -41,7 +41,7 @@ func HandleWithFiber[R Request, Res Response](handler FiberHandler[R, Res]) fibe
 		var req R
 
 		if err := parseRequest(c, &req); err != nil {
-			
+
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 
@@ -71,9 +71,15 @@ func parseRequest[R any](c fiber.Ctx, req *R) error {
 		fmt.Println("uri err", err)
 		return err
 	}
-	if err := c.Bind().Body(req); err != nil {
-		fmt.Println("bosy err ", err)
-		return err
+	// if err := c.Bind().Body(req); err != nil {
+	// 	fmt.Println("body err ", err)
+	// 	return err
+	// }
+	if len(c.Body()) > 0 {
+		if err := c.Bind().Body(req); err != nil {
+			fmt.Println("body err ", err)
+			return err
+		}
 	}
 
 	if err := c.Bind().Header(req); err != nil {

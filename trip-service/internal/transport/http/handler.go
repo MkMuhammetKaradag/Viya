@@ -13,6 +13,7 @@ type Handlers struct {
 
 type tripHandlers struct {
 	Create *controller.CreateTripController
+	Get    *controller.GetTripController
 }
 
 type waypointHandlers struct {
@@ -25,6 +26,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
 			Create: controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
+			Get:    controller.NewGetTripController(usecase.NewGetTripUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
 			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo)),

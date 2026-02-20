@@ -20,7 +20,6 @@ import (
 
 type App struct {
 	config *config.Config
-	// registrar RouteRegistrar
 	processor *worker.TaskProcessor
 	server    *server.Server
 	repo      domain.TripRepository
@@ -39,7 +38,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 type container struct {
 	tripRepo domain.TripRepository
-	// httpRouter RouteRegistrar
 	processor *worker.TaskProcessor
 	server    *server.Server
 	repo      domain.TripRepository
@@ -70,7 +68,6 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
 		tripRepo: repo,
-		// httpRouter: httpRouter,
 		processor: processor,
 		server:    server.NewServer(getServerConfig(cfg), httpRouter),
 		repo:      repo,
