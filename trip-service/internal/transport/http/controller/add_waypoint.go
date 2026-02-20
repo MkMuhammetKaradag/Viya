@@ -9,11 +9,12 @@ import (
 )
 
 type AddWayPointRequest struct {
-	TripID uuid.UUID `json:"trip_id"`
-	Lat    float64   `json:"lat" validate:"required"`
-	Lon    float64   `json:"lon" validate:"required"`
-	Desc   string    `json:"desc,omitempty"`
-	Title  string    `json:"title,omitempty"`
+	TripID     uuid.UUID `json:"trip_id"`
+	Lat        float64   `json:"lat" validate:"required"`
+	Lon        float64   `json:"lon" validate:"required"`
+	Desc       string    `json:"desc,omitempty"`
+	Title      string    `json:"title,omitempty"`
+	OrderIndex int       `json:"order_index,omitempty"`
 }
 
 type AddWayPointResponse struct {
@@ -39,6 +40,7 @@ func (c *AddWayPointController) Handle(fiberCtx fiber.Ctx, req *AddWayPointReque
 		Longitude:   req.Lon,
 		Description: req.Desc,
 		Title:       req.Title,
+		OrderIndex:  req.OrderIndex,
 	}
 
 	wpID, err := c.usecase.Execute(fiberCtx.Context(), wayPointModel)
