@@ -1,6 +1,10 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Trip struct {
 	ID          uuid.UUID `json:"id"`
@@ -8,14 +12,20 @@ type Trip struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description,omitempty"`
 	IsActive    bool      `json:"is_active"`
-	CreatedAt   string    `json:"created_at"`
+	CreatedAt   time.Time `json:"created_at"`
+
+	WayPoints []Waypoint `json:"waypoints,omitempty"`
 }
 
 type Waypoint struct {
-	ID        uuid.UUID `json:"id"`
-	TripID    uuid.UUID `json:"trip_id"`
-	Lat       float64   `json:"lat"`
-	Lon       float64   `json:"lon"`
-	Note      string    `json:"note,omitempty"`
-	CreatedAt string    `json:"created_at"`
+	ID          uuid.UUID `json:"id"`
+	TripID      uuid.UUID `json:"trip_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	OrderIndex  int       `json:"order_index"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	CreatedAt   time.Time `json:"created_at"`
+
+	Photos []string `json:"photos"`
 }

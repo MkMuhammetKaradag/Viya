@@ -12,9 +12,12 @@ const (
 
 	waypointsTable = `CREATE TABLE IF NOT EXISTS waypoints (
 		id UUID PRIMARY  KEY DEFAULT gen_random_uuid(),
+		title VARCHAR(255) NOT NULL,
+		description TEXT,
+		order_index INT NOT NULL,
 		trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
-		lat DOUBLE PRECISION NOT NULL,
-		lon DOUBLE PRECISION NOT NULL,
+		latitude DOUBLE PRECISION NOT NULL,
+		longitude DOUBLE PRECISION NOT NULL,
 		note TEXT,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 	)`

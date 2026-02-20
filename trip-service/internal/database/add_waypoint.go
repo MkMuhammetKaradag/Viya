@@ -20,9 +20,9 @@ func (r *Repository) AddWaypoint(ctx context.Context, wp *domain.Waypoint) (uuid
 	defer tx.Rollback()
 
 	// 2. Durağı Ekle
-	wpQuery := `INSERT INTO waypoints (trip_id, lat, lon, note) VALUES ($1, $2, $3, $4) RETURNING id`
+	wpQuery := `INSERT INTO waypoints (trip_id, title,latitude, longitude, description,order_index) VALUES ($1, $2, $3, $4, $5,(SELECT COALESCE(MAX(order_index), 0) + 1 FROM waypoints WHERE trip_id = $1)) RETURNING id`
 	var wpID uuid.UUID
-	err = tx.QueryRowContext(ctx, wpQuery, wp.TripID, wp.Lat, wp.Lon, wp.Note).Scan(&wpID)
+	err = tx.QueryRowContext(ctx, wpQuery, wp.TripID, wp.Title, wp.Latitude, wp.Longitude, wp.Description).Scan(&wpID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("waypoint insert failed: %w", err)
 	}

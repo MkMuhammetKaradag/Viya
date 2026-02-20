@@ -12,7 +12,8 @@ type AddWayPointRequest struct {
 	TripID uuid.UUID `json:"trip_id"`
 	Lat    float64   `json:"lat" validate:"required"`
 	Lon    float64   `json:"lon" validate:"required"`
-	Note   string    `json:"note,omitempty"`
+	Desc   string    `json:"desc,omitempty"`
+	Title  string    `json:"title,omitempty"`
 }
 
 type AddWayPointResponse struct {
@@ -33,10 +34,11 @@ func NewAddWaypointController(usecase usecase.AddWayPointUseCase) *AddWayPointCo
 func (c *AddWayPointController) Handle(fiberCtx fiber.Ctx, req *AddWayPointRequest) (*AddWayPointResponse, error) {
 
 	wayPointModel := &domain.Waypoint{
-		TripID: req.TripID,
-		Lat:    req.Lat,
-		Lon:    req.Lon,
-		Note:   req.Note,
+		TripID:      req.TripID,
+		Latitude:    req.Lat,
+		Longitude:   req.Lon,
+		Description: req.Desc,
+		Title:       req.Title,
 	}
 
 	wpID, err := c.usecase.Execute(fiberCtx.Context(), wayPointModel)
