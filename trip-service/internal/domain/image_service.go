@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"mime/multipart"
+	"io"
 )
 
 type UploadOptions struct {
@@ -13,7 +13,7 @@ type UploadOptions struct {
 	Transformation string
 }
 type ImageService interface {
-	UploadImage(ctx context.Context, fileHeader *multipart.FileHeader, opts UploadOptions) (string, string, error)
+	UploadImage(ctx context.Context, reader io.Reader, opts UploadOptions) (string, error)
 	UploadImageFromBytes(ctx context.Context, data []byte, opts UploadOptions) (string, error)
 	DeleteImage(ctx context.Context, publicID string) error
 }

@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"time"
 	"trip-service/internal/domain"
-
-	"mime/multipart"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api"
@@ -21,66 +20,62 @@ type CloudinaryService struct {
 func NewCloudinaryService(cloudName, apiKey, apiSecret string) (*CloudinaryService, error) {
 	cld, err := cloudinary.NewFromParams(cloudName, apiKey, apiSecret)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cloudinary connection failed: %w", err)
 	}
 	return &CloudinaryService{client: cld}, nil
 }
 
-func (s *CloudinaryService) UploadImage(ctx context.Context, fileHeader *multipart.FileHeader, opts domain.UploadOptions) (string, string, error) {
-	file, err := fileHeader.Open()
-	if err != nil {
-		return "", "", err
-	}
-	defer file.Close()
+// Ortak yükleme mantığı - io.Reader kullanarak hem file hem byte desteği sağlarız
+func (s *CloudinaryService) upload(ctx context.Context, reader io.Reader, opts domain.UploadOptions) (string, error) {
+	// 1. Benzersiz PublicID oluşturma
+	publicID := fmt.Sprintf("%s_%d", opts.WayPointID, time.Now().UnixNano())
 
+	// 2. Dinamik Transformation
 	if opts.Transformation == "" {
-		opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", opts.Width, opts.Height)
+		width := opts.Width
+		height := opts.Height
+		if width == 0 {
+			width = 800
+		}
+		if height == 0 {
+			height = 600
+		}
+		opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", width, height)
 	}
 
-	uploadRes, err := s.client.Upload.Upload(ctx, file, uploader.UploadParams{
+	// 3. Yükleme
+	uploadRes, err := s.client.Upload.Upload(ctx, reader, uploader.UploadParams{
 		Folder:         opts.Folder,
-		PublicID:       opts.WayPointID,
+		PublicID:       publicID,
 		Overwrite:      api.Bool(true),
 		Invalidate:     api.Bool(true),
 		Transformation: opts.Transformation,
 	})
 
 	if err != nil {
-		return "", "", err
+		return "", fmt.Errorf("cloud upload failed: %w", err)
 	}
-	return uploadRes.SecureURL, uploadRes.PublicID, nil
+
+	// 4. Cloudinary iç hata kontrolü
+	if uploadRes.Error.Message != "" {
+		return "", fmt.Errorf("cloudinary api error: %s", uploadRes.Error.Message)
+	}
+
+	return uploadRes.SecureURL, nil
 }
-func (s *CloudinaryService) DeleteImage(ctx context.Context, wayPointID string) error {
+
+// UploadImage artık sadece dosyayı açıp ortak upload'a paslıyor
+func (s *CloudinaryService) UploadImage(ctx context.Context, data io.Reader, opts domain.UploadOptions) (string, error) {
+	return s.upload(ctx, data, opts)
+}
+
+func (s *CloudinaryService) UploadImageFromBytes(ctx context.Context, data []byte, opts domain.UploadOptions) (string, error) {
+	return s.upload(ctx, bytes.NewReader(data), opts)
+}
+
+func (s *CloudinaryService) DeleteImage(ctx context.Context, publicID string) error {
 	_, err := s.client.Upload.Destroy(ctx, uploader.DestroyParams{
-		PublicID: wayPointID,
+		PublicID: publicID,
 	})
 	return err
-}
-func (s *CloudinaryService) UploadImageFromBytes(ctx context.Context, data []byte, opts domain.UploadOptions) (string, error) {
-
-	reader := bytes.NewReader(data)
-	public := fmt.Sprintf("%s_%d", opts.WayPointID, time.Now().UnixNano())
-	if opts.Transformation == "" {
-		if opts.Width == 0 {
-			opts.Width = 800
-		}
-		if opts.Height == 0 {
-			opts.Height = 600
-		}
-
-		opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", opts.Width, opts.Height)
-	}
-	fmt.Println("gelen ", opts.WayPointID)
-	uploadRes, err := s.client.Upload.Upload(ctx, reader, uploader.UploadParams{
-		Folder:         opts.Folder,
-		PublicID:       public,
-		Transformation: opts.Transformation,
-	})
-
-	if err != nil {
-		fmt.Println("err.", err)
-		return "", err
-	}
-	fmt.Println("res:", uploadRes)
-	return uploadRes.SecureURL, nil
 }

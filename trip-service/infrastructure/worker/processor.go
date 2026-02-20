@@ -1,4 +1,4 @@
-// internal/product-service/infrastructure/worker/processor.go
+// trip-service/infrastructure/worker/processor.go
 package worker
 
 import (
@@ -47,13 +47,14 @@ func (p *TaskProcessor) Start() error {
 func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.Task) error {
 	var payload domain.UploadWaypointPhotoTaskPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		return err
+		return fmt.Errorf("json unmarshal failed: %w", err)
 	}
 
-	// 1. Dosyayı diskten aç
+	// 1. Dosyayı diskten oku
 	fileBytes, err := os.ReadFile(payload.FilePath)
 	if err != nil {
-		return fmt.Errorf("dosya okunamadı (belki silindi?): %w", err)
+		// Eğer dosya diskte yoksa retry etmenin anlamı yok (SkipRetry)
+		return fmt.Errorf("file not found at %s: %w", payload.FilePath, asynq.SkipRetry)
 	}
 
 	// 2. Cloudinary'ye yükle
@@ -62,17 +63,24 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 		Folder:     "waypoint_photos",
 	})
 	if err != nil {
-		return err // Retry mekanizması çalışır
+		return fmt.Errorf("cloudinary upload failed: %w", err)
 	}
 
 	// 3. DB'ye kaydet
-	wpID, _ := uuid.Parse(payload.WayPointID)
-	if err := p.repo.AddWaypointPhotos(ctx, wpID, []string{url}); err != nil {
-		return err
+	wpID, err := uuid.Parse(payload.WayPointID)
+	if err != nil {
+		return fmt.Errorf("invalid uuid %s: %w", payload.WayPointID, asynq.SkipRetry)
 	}
 
-	// 4. İŞLEM TAMAM: Geçici dosyayı diskten sil (Cleanup)
-	_ = os.Remove(payload.FilePath)
+	if err := p.repo.AddWaypointPhotos(ctx, wpID, []string{url}); err != nil {
+		return fmt.Errorf("db persistence failed: %w", err)
+	}
 
+	// 4. İşlem başarıyla bittiğinde dosyayı temizle
+	if err := os.Remove(payload.FilePath); err != nil {
+		log.Printf("Warning: temporary file could not be removed: %v", err)
+	}
+
+	log.Printf("Successfully processed photo for waypoint: %s", payload.WayPointID)
 	return nil
 }

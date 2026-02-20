@@ -1,3 +1,4 @@
+// trip-service/infrastructure/worker/worker.go
 package worker
 
 import (
@@ -25,7 +26,7 @@ func (w *Worker) EnqueueUploadWaypointPhoto(payload domain.UploadWaypointPhotoTa
 		return err
 	}
 
-	task := asynq.NewTask(TaskUploadWaypointPhoto, data, asynq.MaxRetry(5))
+	task := asynq.NewTask(TaskUploadWaypointPhoto, data, asynq.MaxRetry(5), asynq.Queue("critical"))
 
 	_, err = w.client.Enqueue(task)
 	return err
