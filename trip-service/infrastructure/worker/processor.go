@@ -84,3 +84,8 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 	log.Printf("Successfully processed photo for waypoint: %s", payload.WayPointID)
 	return nil
 }
+
+func (p *TaskProcessor) Stop() {
+	log.Println("Worker Processor durduruluyor...")
+	p.server.Shutdown()
+}

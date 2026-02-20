@@ -1,3 +1,4 @@
+// trip-service/internal/app/app.go
 package app
 
 import (
@@ -9,17 +10,20 @@ import (
 	"trip-service/internal/config"
 	"trip-service/internal/database"
 	"trip-service/internal/domain"
+	"trip-service/internal/graceful"
+	"trip-service/internal/server"
 
 	httptransport "trip-service/internal/transport/http"
 
-	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/hibiken/asynq"
 )
 
 type App struct {
-	config    *config.Config
-	registrar RouteRegistrar
+	config *config.Config
+	// registrar RouteRegistrar
+	processor *worker.TaskProcessor
+	server    *server.Server
+	repo      domain.TripRepository
 	// Add your application fields here
 }
 
@@ -28,12 +32,17 @@ func NewApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap failed: %w", err)
 	}
-	return &App{config: cfg, registrar: c.httpRouter}, nil
+	return &App{config: cfg,
+		processor: c.processor,
+		server:    c.server}, nil
 }
 
 type container struct {
-	tripRepo   domain.TripRepository
-	httpRouter RouteRegistrar
+	tripRepo domain.TripRepository
+	// httpRouter RouteRegistrar
+	processor *worker.TaskProcessor
+	server    *server.Server
+	repo      domain.TripRepository
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
@@ -46,24 +55,29 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		return nil, err
 	}
 	redisOpt := asynq.RedisClientOpt{Addr: "localhost:6379", DB: 2}
+
 	asynqClient := asynq.NewClient(redisOpt)
 	wrk := worker.NewWorker(asynqClient)
 
 	processor := worker.NewTaskProcessor(redisOpt, repo, imgSvc)
 	go func() {
+		log.Println("Starting Task Processor on Redis DB 2...")
 		if err := processor.Start(); err != nil {
-			log.Printf("Task Processor error: %v", err)
+			log.Fatalf("Task Processor fatal error: %v", err)
 		}
 	}()
 
 	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
-		tripRepo:   repo,
-		httpRouter: httpRouter,
+		tripRepo: repo,
+		// httpRouter: httpRouter,
+		processor: processor,
+		server:    server.NewServer(getServerConfig(cfg), httpRouter),
+		repo:      repo,
 	}, nil
 }
-func getServerConfig(cfg *config.Config) AppConfig {
-	return AppConfig{
+func getServerConfig(cfg *config.Config) server.Config {
+	return server.Config{
 		Port:         cfg.Server.Port,
 		IdleTimeout:  5 * time.Second,
 		ReadTimeout:  10 * time.Second,
@@ -79,49 +93,17 @@ func initStorage(cfg *config.Config) (domain.TripRepository, error) {
 	return repo, nil
 }
 
-type AppConfig struct {
-	Port         string
-	IdleTimeout  time.Duration
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-}
-type RouteRegistrar interface {
-	Register(app *fiber.App)
-}
-
-func (a *App) Run() error {
-	cfg := getServerConfig(a.config)
-	app := fiber.New(fiber.Config{
-		AppName:      "Viya Trip Service v1.0",
-		IdleTimeout:  cfg.IdleTimeout,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-		Concurrency:  256 * 1024,
-	})
-
-	app.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		AllowMethods:     []string{"GET", "POST", "HEAD", "PUT", "DELETE", "PATCH"},
-		AllowCredentials: true,
-	}))
-
-	if a.registrar != nil {
-		a.registrar.Register(app)
+func (a *App) Start() error {
+	// ctx, cancel := context.WithCancel(context.Background())
+	// defer cancel()
+	go graceful.WaitForShutdown(a.server.FiberApp(), a.processor, a.repo, 5*time.Second)
+	if err := a.server.Start(); err != nil {
+		return fmt.Errorf("task processor error: %w", err)
 	}
-	app.Get("/health", func(c fiber.Ctx) error {
-		// return c.SendString("OK")
-		return c.JSON(fiber.Map{
-			"status":  "active",
-			"service": "trip-service",
-		})
-	})
 
-	return app.Listen(cfg.Port)
-
+	return nil
 }
-
-func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker) RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker) server.RouteRegistrar {
 
 	httpHandlers := httptransport.NewHandlers(r, i, w)
 	return httptransport.NewRouter(httpHandlers)
