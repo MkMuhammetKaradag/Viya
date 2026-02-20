@@ -11,5 +11,6 @@ type TripRepository interface {
 	AddWaypoint(ctx context.Context, wp *Waypoint) (uuid.UUID, error)
 	AddWaypointPhotos(ctx context.Context, waypointID uuid.UUID, photoURLs []string) error
 	GetTripByID(ctx context.Context, tripID uuid.UUID) (*Trip, error)
+	DeleteWaypoint(ctx context.Context, waypointID uuid.UUID) error
 	Close() error
 }

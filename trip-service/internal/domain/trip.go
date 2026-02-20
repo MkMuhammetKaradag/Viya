@@ -22,7 +22,7 @@ type Waypoint struct {
 	TripID      uuid.UUID `json:"trip_id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
-	OrderIndex  int       `json:"order_index"`
+	OrderIndex  int       `json:"order_index,omitempty" `
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`
 	CreatedAt   time.Time `json:"created_at"`
