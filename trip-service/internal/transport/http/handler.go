@@ -21,6 +21,7 @@ type waypointHandlers struct {
 	AddPhotos *controller.AddWayPointPhotosController
 	Delete    *controller.DeleteWaypointController
 	Reorder   *controller.ReorderController
+	Update    *controller.UpdateWaypointController
 }
 
 func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker) *Handlers {
@@ -35,6 +36,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
 			Delete:    controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
 			Reorder:   controller.NewReorderController(usecase.NewReorderUseCase(repo)),
+			Update:    controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
 		},
 	}
 }

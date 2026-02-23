@@ -34,6 +34,7 @@ func (r *Router) Register(app *fiber.App) {
 		waypoints.Post("/:waypoint_id/photos", handler.HandleWithFiber[controller.AddWayPointPhotosRequest, controller.AddWayPointPhotosResponse](h.WayPoint.AddPhotos))
 		waypoints.Delete("/:waypoint_id", handler.HandleWithFiber[controller.DeleteWaypointRequest, controller.DeleteWaypointResponse](h.WayPoint.Delete))
 		waypoints.Put("/:waypoint_id/reorder", handler.HandleWithFiber[controller.ReorderRequest, controller.ReorderResponse](h.WayPoint.Reorder))
+		waypoints.Put("/:waypoint_id", handler.HandleWithFiber[controller.UpdateWaypointRequest, controller.UpdateWaypointResponse](h.WayPoint.Update))
 	}
 
 }
