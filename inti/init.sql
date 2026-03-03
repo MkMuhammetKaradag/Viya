@@ -6,7 +6,7 @@ CREATE DATABASE userdb;
 
 CREATE DATABASE tripdb;
 
-CREATE DATABASE orderdb;
+CREATE DATABASE authdb;
 
 CREATE DATABASE paymentdb;
 CREATE DATABASE notificationdb;
