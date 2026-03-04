@@ -23,7 +23,7 @@ func (uc *signupUseCase) Execute(ctx context.Context, username, email, password 
 		"email:", email,
 		"password:", password,
 	)
-	if err := uc.repo.Signup(ctx, username, email, password); err != nil {
+	if err := uc.repo.SignUp(ctx, username, email, password); err != nil {
 		return fmt.Errorf("signup error: %w", err)
 	}
 

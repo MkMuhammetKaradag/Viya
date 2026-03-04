@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (r *Repository) Signup(ctx context.Context, username, email, password string) error {
+func (r *Repository) SignUp(ctx context.Context, username, email, password string) error {
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hashing error: %w", err)
