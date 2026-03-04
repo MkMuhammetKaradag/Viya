@@ -8,7 +8,7 @@ import (
 )
 
 type SignInUseCase interface {
-	Execute(ctx context.Context, identifier, password string) error
+	Execute(ctx context.Context, identifier, password string) (string, error)
 }
 
 type signInUsecase struct {
@@ -23,7 +23,7 @@ func NewSignInUseCase(repo domain.AuthRepository, sessionRepo domain.SessionRepo
 	}
 }
 
-func (uc *signInUsecase) Execute(ctx context.Context, identifier, password string) error {
+func (uc *signInUsecase) Execute(ctx context.Context, identifier, password string) (string, error) {
 
 	fmt.Println(
 		"Executing SignInUseCase with identifier:", identifier,
@@ -31,15 +31,15 @@ func (uc *signInUsecase) Execute(ctx context.Context, identifier, password strin
 	)
 	user, err := uc.repo.SignIn(ctx, identifier, password)
 	if err != nil {
-		return fmt.Errorf("signin error: %w", err)
+		return "", fmt.Errorf("signin error: %w", err)
 	}
 	userData := &domain.SessionData{
 		UserID: user.ID, // In a real implementation, this would be the user's unique ID from the database
 	}
 	sessionID, err := uc.sessionRepo.CreateSession(ctx, 24*time.Hour, userData)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println("sessionID", sessionID)
-	return nil
+	// fmt.Println("sessionID", sessionID)
+	return sessionID, nil
 }

@@ -19,7 +19,7 @@ import (
 )
 
 type App struct {
-	config *config.Config
+	config    *config.Config
 	processor *worker.TaskProcessor
 	server    *server.Server
 	repo      domain.TripRepository
@@ -37,7 +37,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 }
 
 type container struct {
-	tripRepo domain.TripRepository
+	tripRepo  domain.TripRepository
 	processor *worker.TaskProcessor
 	server    *server.Server
 	repo      domain.TripRepository
@@ -52,7 +52,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, err
 	}
-	redisOpt := asynq.RedisClientOpt{Addr: "localhost:6379", DB: 2}
+	redisOpt := asynq.RedisClientOpt{Addr: "localhost:6379", DB: 2, Password: "password"}
 
 	asynqClient := asynq.NewClient(redisOpt)
 	wrk := worker.NewWorker(asynqClient)
@@ -67,7 +67,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 
 	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
-		tripRepo: repo,
+		tripRepo:  repo,
 		processor: processor,
 		server:    server.NewServer(getServerConfig(cfg), httpRouter),
 		repo:      repo,

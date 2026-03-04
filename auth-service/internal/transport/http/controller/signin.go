@@ -2,6 +2,7 @@ package controller
 
 import (
 	"auth-service/internal/transport/http/usecase"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -25,10 +26,19 @@ func NewSignInController(usecase usecase.SignInUseCase) *SignInController {
 }
 
 func (c *SignInController) Handle(fbrCtx fiber.Ctx, req *SignInRequest) (*SignInResponse, error) {
-	err := c.usecase.Execute(fbrCtx.Context(), req.Identifier, req.Password)
+	sessionID, err := c.usecase.Execute(fbrCtx.Context(), req.Identifier, req.Password)
 	if err != nil {
 		return nil, err
 	}
+	fbrCtx.Cookie(&fiber.Cookie{
+		Name:     "session_id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HTTPOnly: true,  // JavaScript tarafından okunamaz (XSS koruması)
+		Secure:   true,  // Sadece HTTPS üzerinden gönderilir
+		SameSite: "Lax", // CSRF saldırılarına karşı koruma sağlar
+		Path:     "/",
+	})
 	return &SignInResponse{
 		Message: "Sign in successful",
 	}, nil
