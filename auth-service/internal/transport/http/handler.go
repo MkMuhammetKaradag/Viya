@@ -12,12 +12,14 @@ type Handler struct {
 
 type AuthHandlers struct {
 	SignUp *controller.SignUpController
+	SignIn *controller.SignInController
 }
 
-func NewHandlers(repo domain.AuthRepository) *Handler {
+func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository) *Handler {
 	return &Handler{
 		Auth: &AuthHandlers{
 			SignUp: controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
+			SignIn: controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
 		},
 	}
 }

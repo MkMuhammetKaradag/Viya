@@ -12,6 +12,7 @@ import (
 
 type Config struct {
 	Srver ServerConfig `mapstructure:"server"`
+	Redis RedisConfig  `mapstructure:"redis"`
 	DB    DBConfig     `mapstructure:"db"`
 }
 
@@ -25,6 +26,11 @@ type DBConfig struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 	DBName   string `mapstructure:"dbname"`
+}
+type RedisConfig struct {
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
 }
 
 func Load() (*Config, error) {
