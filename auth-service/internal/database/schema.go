@@ -2,7 +2,7 @@ package database
 
 const (
 	usersTable = `CREATE TABLE IF NOT EXISTS users (
-	id SERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	email VARCHAR(255) UNIQUE NOT NULL,
 	username VARCHAR(50) NOT NULL UNIQUE,
 	first_name VARCHAR(50),
