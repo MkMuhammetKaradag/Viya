@@ -5,6 +5,8 @@ import (
 	"auth-service/internal/database"
 	"auth-service/internal/domain"
 	"auth-service/internal/server"
+	httptransport "auth-service/internal/transport/http"
+
 	"fmt"
 	"time"
 )
@@ -33,10 +35,13 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
-	srv := server.NewServer(
+
+	httpRouter := setupHttpRouter(cfg, repo)
+
+	return &container{server: server.NewServer(
 		getServerConfig(),
-	)
-	return &container{server: srv, repo: repo}, nil
+		httpRouter,
+	), repo: repo}, nil
 }
 
 func initStorage(cfg *config.Config) (domain.AuthRepository, error) {
@@ -59,4 +64,11 @@ func getServerConfig() server.ServerConfig {
 
 func (a *App) Start() error {
 	return a.server.Start()
+}
+
+func setupHttpRouter(cfg *config.Config, repo domain.AuthRepository) server.RouteRegistrar {
+
+	handler := httptransport.NewHandlers(repo)
+
+	return httptransport.NewRouter(handler)
 }

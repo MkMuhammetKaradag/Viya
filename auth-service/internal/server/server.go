@@ -7,6 +7,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
+type RouteRegistrar interface {
+	Register(app *fiber.App)
+}
 type ServerConfig struct {
 	Port         string
 	IdleTimeout  time.Duration
@@ -19,7 +22,7 @@ type Server struct {
 	cfg ServerConfig
 }
 
-func NewServer(cfg ServerConfig) *Server {
+func NewServer(cfg ServerConfig, registrar RouteRegistrar) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
@@ -32,7 +35,9 @@ func NewServer(cfg ServerConfig) *Server {
 			"service": "auth-service",
 		})
 	})
-
+	if registrar != nil {
+		registrar.Register(app)
+	}
 	return &Server{
 		app: app,
 		cfg: cfg,
