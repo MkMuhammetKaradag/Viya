@@ -6,6 +6,7 @@ import (
 	"api-gateway/internal/middleware"
 	"api-gateway/internal/service"
 	"api-gateway/internal/session"
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -44,6 +45,8 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 
 	proxyHandler := handlers.NewProxyHandler(registry, sessionManager)
 	f.All("/*", proxyHandler.Handle)
+	ctx := context.Background()
+	registry.StartHealthChecks(ctx, 15*time.Second)
 	return &Server{
 		cfg:      cfg,
 		app:      f,

@@ -10,7 +10,7 @@ import (
 )
 
 type Session struct {
-	UserID string
+	UserID string `json:"user_id"`
 }
 
 type SessionManager struct {

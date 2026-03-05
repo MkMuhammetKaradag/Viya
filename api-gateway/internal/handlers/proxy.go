@@ -31,7 +31,7 @@ func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Service not found"})
 	}
 
-	baseURL, ok := svc.GetNextBaseURL()
+	baseURL, ok := svc.GetNextBackend()
 	if !ok {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Service unhealthy"})
 	}
@@ -44,6 +44,8 @@ func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 
 	// Setup Request Headers
 
+	userID := c.Locals("user_id").(string)
+	c.Request().Header.Set("X-User-ID", userID)
 	c.Request().Header.Set("X-Forwarded-For", c.IP())
 	log.Printf("🔀 Proxying to: %s", targetURL)
 
