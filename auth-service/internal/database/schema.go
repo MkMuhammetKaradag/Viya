@@ -11,6 +11,11 @@ const (
 	avatar_url TEXT,
 	banner_url TEXT,
 	password VARCHAR(255) NOT NULL,
+	failed_login_attempts INT DEFAULT 0,
+	account_locked BOOLEAN DEFAULT false,
+
+	lock_until TIMESTAMP WITH TIME ZONE,
+	last_login TIMESTAMP WITH TIME ZONE,
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 )`
