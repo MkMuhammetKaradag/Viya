@@ -34,7 +34,7 @@ func (uc *signInUsecase) Execute(ctx context.Context, identifier, password strin
 		return "", fmt.Errorf("signin error: %w", err)
 	}
 	userData := &domain.SessionData{
-		UserID: user.ID, // In a real implementation, this would be the user's unique ID from the database
+		UserID: user.ID.String(), // In a real implementation, this would be the user's unique ID from the database
 	}
 	sessionID, err := uc.sessionRepo.CreateSession(ctx, 24*time.Hour, userData)
 	if err != nil {

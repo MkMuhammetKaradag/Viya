@@ -23,6 +23,7 @@ func (r *Router) Register(app *fiber.App) {
 	{
 		auth.Post("/signup", handler.HandleBasic[controller.SignUpRequest, controller.SignUpResponse](h.Auth.SignUp))
 		auth.Post("/signin", handler.HandleWithFiber[controller.SignInRequest, controller.SignInResponse](h.Auth.SignIn))
+		auth.Post("/forgot-password", handler.HandleBasic[controller.ForgotPasswordRequest, controller.ForgotPasswordResponse](h.Auth.ForgotPassword))
 	}
 
 }

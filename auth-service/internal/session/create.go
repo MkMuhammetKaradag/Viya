@@ -25,6 +25,6 @@ func (sr *SessionRepository) CreateSession(ctx context.Context, duration time.Du
 	return sessionID, nil
 }
 func generateSessionID() string {
-
+	//return "sess:" + uuid.New().String()
 	return fmt.Sprintf("session-%d", time.Now().UnixNano())
 }

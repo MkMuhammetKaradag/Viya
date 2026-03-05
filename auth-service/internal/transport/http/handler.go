@@ -11,15 +11,17 @@ type Handler struct {
 }
 
 type AuthHandlers struct {
-	SignUp *controller.SignUpController
-	SignIn *controller.SignInController
+	SignUp         *controller.SignUpController
+	SignIn         *controller.SignInController
+	ForgotPassword *controller.ForgotPasswordController
 }
 
 func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository) *Handler {
 	return &Handler{
 		Auth: &AuthHandlers{
-			SignUp: controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
-			SignIn: controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
+			SignUp:         controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
+			SignIn:         controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
+			ForgotPassword: controller.NewForgotPasswordController(usecase.NewForgotPasswordUseCase(repo, sessionRepo)),
 		},
 	}
 }
