@@ -5,6 +5,7 @@ import (
 	"auth-service/internal/domain"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	_ "github.com/lib/pq"
 )
@@ -34,7 +35,11 @@ func NewRepository(cfg *config.Config) (domain.AuthRepository, error) {
 
 func (r *Repository) Close() error {
 	if r.db != nil {
-		return r.db.Close()
+		err := r.db.Close()
+		if err != nil {
+			return fmt.Errorf("postgres connection close error: %w", err)
+		}
+		fmt.Println("📡 postgre connection closed successfully.")
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/config"
 	"auth-service/internal/database"
 	"auth-service/internal/domain"
+	"auth-service/internal/graceful"
 	"auth-service/internal/server"
 	"auth-service/internal/session"
 	httptransport "auth-service/internal/transport/http"
@@ -70,7 +71,22 @@ func getServerConfig() server.ServerConfig {
 }
 
 func (a *App) Start() error {
-	return a.server.Start()
+	serverErr := make(chan error, 1)
+	go func() {
+		serverErr <- a.server.Start()
+	}()
+
+	// 2. Shutdown sinyalini burada (ana akışta) bekle
+	// Bu fonksiyon bloklayıcı (blocking) olmalı
+	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.repo, a.session)
+
+	// Eğer server Start sırasında bir hata aldıysa (örn: port meşgul) onu dön
+	select {
+	case err := <-serverErr:
+		return err
+	default:
+		return nil
+	}
 }
 
 func setupHttpRouter(cfg *config.Config, repo domain.AuthRepository, sessionRepo domain.SessionRepository) server.RouteRegistrar {

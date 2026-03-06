@@ -24,3 +24,13 @@ func NewSessionRepository(cfg *config.Config) (*SessionRepository, error) {
 func (sr *SessionRepository) userSessionsKey(userID string) string {
 	return fmt.Sprintf("auth-service:user_sessions:%s", userID)
 }
+func (sr *SessionRepository) Close() error {
+	if sr.client != nil {
+		err := sr.client.Close()
+		if err != nil {
+			return fmt.Errorf("redis connection close error: %w", err)
+		}
+		fmt.Println("📡 Redis connection closed successfully.")
+	}
+	return nil
+}
