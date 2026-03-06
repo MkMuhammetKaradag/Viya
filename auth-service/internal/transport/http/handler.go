@@ -14,6 +14,7 @@ type AuthHandlers struct {
 	SignUp         *controller.SignUpController
 	SignIn         *controller.SignInController
 	ForgotPassword *controller.ForgotPasswordController
+	ResetPassword  *controller.ResetPasswordController
 }
 
 func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository) *Handler {
@@ -22,6 +23,7 @@ func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepositor
 			SignUp:         controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
 			SignIn:         controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
 			ForgotPassword: controller.NewForgotPasswordController(usecase.NewForgotPasswordUseCase(repo, sessionRepo)),
+			ResetPassword:  controller.NewResetPasswordController(usecase.NewResetPasswordUseCase(repo)),
 		},
 	}
 }

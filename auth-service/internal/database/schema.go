@@ -25,6 +25,7 @@ const (
 			user_id UUID NOT NULL,
 			token TEXT NOT NULL UNIQUE,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			 expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '15 minutes',
 			FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 		)`
 )
