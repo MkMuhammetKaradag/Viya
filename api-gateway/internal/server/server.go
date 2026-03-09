@@ -37,7 +37,19 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 	f.Use(logger.New(logger.Config{
 		Format: "[${time}] ${status} - ${method} ${path} - ${latency}\n",
 	}))
-	f.Use(cors.New())
+	f.Get("/health", func(c fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "active",
+			"service": "api-service",
+		})
+	})
+	f.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		// Tarayıcı bazen ön kontrol yanıtlarının önbelleğe alınmasını ister
+		MaxAge: 3600,
+	}))
 	protectedPrefixes := []string{
 		"/api/v1/trips",
 	}

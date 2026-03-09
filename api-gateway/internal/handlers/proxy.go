@@ -4,12 +4,9 @@ import (
 	"api-gateway/internal/service"
 	"api-gateway/internal/session"
 	"log"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/proxy"
-
-	"github.com/valyala/fasthttp"
 )
 
 type ProxyHandler struct {
@@ -25,6 +22,10 @@ func NewProxyHandler(registry *service.ServiceRegistry, sessionManager *session.
 }
 
 func (h *ProxyHandler) Handle(c fiber.Ctx) error {
+	if c.Method() == "OPTIONS" {
+		
+		return c.SendStatus(fiber.StatusNoContent)
+	}
 	path := c.Path()
 	svc, ok := h.Registry.GetByPath(path)
 	if !ok {
@@ -44,19 +45,23 @@ func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 
 	// Setup Request Headers
 
-	userID := c.Locals("user_id").(string)
-	c.Request().Header.Set("X-User-ID", userID)
+	if userID, ok := c.Locals("user_id").(string); ok && userID != "" {
+		c.Request().Header.Set("X-User-ID", userID)
+	}
+
 	c.Request().Header.Set("X-Forwarded-For", c.IP())
 	log.Printf("🔀 Proxying to: %s", targetURL)
 
-	if err := proxy.Do(c, targetURL, &fasthttp.Client{
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-	}); err != nil {
-
+	if err := proxy.Do(c, targetURL); err != nil {
 		log.Printf("❌ Proxy error [%s]: %v", targetURL, err)
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "Backend service error"})
 	}
+	// err := proxy.Do(c, targetURL)
+	c.Response().Header.Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
 
+	// if err != nil {
+	// 	return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "Backend error"})
+	// }
 	return nil
 }
