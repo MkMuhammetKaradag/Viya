@@ -34,8 +34,8 @@ func (c *SignInController) Handle(fbrCtx fiber.Ctx, req *SignInRequest) (*SignIn
 		Name:     "session_id",
 		Value:    sessionID,
 		Expires:  time.Now().Add(24 * time.Hour),
-		HTTPOnly: true,  // JavaScript tarafından okunamaz (XSS koruması)
-		Secure:   true,  // Sadece HTTPS üzerinden gönderilir
+		HTTPOnly: true, // JavaScript tarafından okunamaz (XSS koruması)
+		Secure:   false,
 		SameSite: "Lax", // CSRF saldırılarına karşı koruma sağlar
 		Path:     "/",
 	})
