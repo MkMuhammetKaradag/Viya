@@ -18,10 +18,11 @@ func (sr *SessionRepository) CreateSession(ctx context.Context, duration time.Du
 	sessionID := generateSessionID()
 	pipe.Set(ctx, sessionID, jsonData, duration)
 	pipe.SAdd(ctx, sr.userSessionsKey(data.UserID), sessionID)
-
+	pipe.Expire(ctx, sr.userSessionsKey(data.UserID), duration)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return "", fmt.Errorf("failed to create session: %w", err)
 	}
+
 	return sessionID, nil
 }
 func generateSessionID() string {

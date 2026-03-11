@@ -26,7 +26,8 @@ func NewSignInController(usecase usecase.SignInUseCase) *SignInController {
 }
 
 func (c *SignInController) Handle(fbrCtx fiber.Ctx, req *SignInRequest) (*SignInResponse, error) {
-	sessionID, err := c.usecase.Execute(fbrCtx.Context(), req.Identifier, req.Password)
+
+	sessionID, err := c.usecase.Execute(fbrCtx, req.Identifier, req.Password)
 	if err != nil {
 		return nil, err
 	}

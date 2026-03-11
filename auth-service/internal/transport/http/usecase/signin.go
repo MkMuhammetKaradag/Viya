@@ -2,13 +2,14 @@ package usecase
 
 import (
 	"auth-service/internal/domain"
-	"context"
 	"fmt"
 	"time"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 type SignInUseCase interface {
-	Execute(ctx context.Context, identifier, password string) (string, error)
+	Execute(fiberCtx fiber.Ctx, identifier, password string) (string, error)
 }
 
 type signInUsecase struct {
@@ -23,20 +24,25 @@ func NewSignInUseCase(repo domain.AuthRepository, sessionRepo domain.SessionRepo
 	}
 }
 
-func (uc *signInUsecase) Execute(ctx context.Context, identifier, password string) (string, error) {
+func (uc *signInUsecase) Execute(fiberCtx fiber.Ctx, identifier, password string) (string, error) {
 
 	fmt.Println(
 		"Executing SignInUseCase with identifier:", identifier,
 		"and password:", password,
 	)
-	user, err := uc.repo.SignIn(ctx, identifier, password)
+	user, err := uc.repo.SignIn(fiberCtx.Context(), identifier, password)
 	if err != nil {
 		return "", fmt.Errorf("signin error: %w", err)
 	}
+	device := fiberCtx.Get("User-Agent")
+	ip := fiberCtx.IP()
 	userData := &domain.SessionData{
-		UserID: user.ID.String(), // In a real implementation, this would be the user's unique ID from the database
+		UserID:    user.ID.String(), // In a real implementation, this would be the user's unique ID from the database
+		CreatedAt: time.Now(),
+		Device:    device,
+		Ip:        ip,
 	}
-	sessionID, err := uc.sessionRepo.CreateSession(ctx, 24*time.Hour, userData)
+	sessionID, err := uc.sessionRepo.CreateSession(fiberCtx.Context(), 24*time.Hour*7, userData)
 	if err != nil {
 		return "", err
 	}

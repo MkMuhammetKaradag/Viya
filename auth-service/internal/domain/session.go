@@ -6,7 +6,10 @@ import (
 )
 
 type SessionData struct {
-	UserID string `json:"user_id"`
+	UserID    string    `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	Device    string    `json:"device"`
+	Ip        string    `json:"ip"`
 	// Add more fields as needed, e.g., roles, permissions, etc.
 }
 type SessionRepository interface {
