@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"auth-service/internal/domain"
+	"fmt"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -20,8 +21,9 @@ func NewSignOutUseCase(repository domain.SessionRepository) SignOutUseCase {
 }
 
 func (u *signOutUseCase) Execute(ctx fiber.Ctx) error {
-	_ = ctx.Cookies("session_id")
-
+	sessionID := ctx.Cookies("session_id")
+	fmt.Println(sessionID)
+	err := u.sessionRepository.DeleteSession(ctx.Context(), sessionID)
 	// Hata olsa bile tarayıcıdaki çerezi temizle
 	ctx.Cookie(&fiber.Cookie{
 		Name:     "session_id",
@@ -32,6 +34,8 @@ func (u *signOutUseCase) Execute(ctx fiber.Ctx) error {
 		Secure:   false,
 		SameSite: "Lax",
 	})
-
+	if err != nil {
+		return err
+	}
 	return nil
 }

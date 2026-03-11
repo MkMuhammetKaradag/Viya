@@ -13,5 +13,6 @@ type SessionRepository interface {
 	CreateSession(ctx context.Context, duration time.Duration, data *SessionData) (string, error)
 	IsActionLocked(ctx context.Context, key string) (bool, error)
 	SetActionLock(ctx context.Context, key string, duration time.Duration) error
+	DeleteSession(ctx context.Context, sessionID string) error
 	Close() error
 }
