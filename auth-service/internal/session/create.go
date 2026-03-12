@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func (sr *SessionRepository) CreateSession(ctx context.Context, duration time.Duration, data *domain.SessionData) (string, error) {
@@ -16,7 +18,7 @@ func (sr *SessionRepository) CreateSession(ctx context.Context, duration time.Du
 	}
 	pipe := sr.client.TxPipeline()
 	sessionID := generateSessionID()
-	pipe.Set(ctx, sessionID, jsonData, duration)
+	pipe.Set(ctx, "session:"+sessionID, jsonData, duration)
 	pipe.SAdd(ctx, sr.userSessionsKey(data.UserID), sessionID)
 	pipe.Expire(ctx, sr.userSessionsKey(data.UserID), duration)
 	if _, err := pipe.Exec(ctx); err != nil {
@@ -27,5 +29,5 @@ func (sr *SessionRepository) CreateSession(ctx context.Context, duration time.Du
 }
 func generateSessionID() string {
 	//return "sess:" + uuid.New().String()
-	return fmt.Sprintf("session-%d", time.Now().UnixNano())
+	return uuid.New().String()
 }

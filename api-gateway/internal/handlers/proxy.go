@@ -4,6 +4,7 @@ import (
 	"api-gateway/internal/service"
 	"api-gateway/internal/session"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/proxy"
@@ -23,7 +24,7 @@ func NewProxyHandler(registry *service.ServiceRegistry, sessionManager *session.
 
 func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 	if c.Method() == "OPTIONS" {
-		
+
 		return c.SendStatus(fiber.StatusNoContent)
 	}
 	path := c.Path()
@@ -57,6 +58,19 @@ func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "Backend service error"})
 	}
 	// err := proxy.Do(c, targetURL)
+
+	if newSessionID, ok := c.Locals("new_session_id").(string); ok && newSessionID != "" {
+		c.Cookie(&fiber.Cookie{
+			Name:     "session_id",
+			Value:    newSessionID,
+			HTTPOnly: true,
+			Secure:   false, // Localhost için false
+			SameSite: "Lax",
+			Path:     "/",
+			Expires:  time.Now().Add(24 * time.Hour),
+		})
+		log.Printf("✅ Proxy sonrası Cookie tekrar basıldı: %s", newSessionID)
+	}
 	c.Response().Header.Set("Access-Control-Allow-Origin", "http://localhost:5173")
 	c.Response().Header.Set("Access-Control-Allow-Credentials", "true")
 

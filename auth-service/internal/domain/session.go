@@ -6,10 +6,11 @@ import (
 )
 
 type SessionData struct {
-	UserID    string    `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
-	Device    string    `json:"device"`
-	Ip        string    `json:"ip"`
+	UserID         string    `json:"user_id"`
+	FirstCreatedAt time.Time `json:"fisrt_created_at"`
+	CreatedAt      time.Time `json:"created_at"`
+	Device         string    `json:"device"`
+	Ip             string    `json:"ip"`
 	// Add more fields as needed, e.g., roles, permissions, etc.
 }
 type SessionRepository interface {
@@ -17,5 +18,7 @@ type SessionRepository interface {
 	IsActionLocked(ctx context.Context, key string) (bool, error)
 	SetActionLock(ctx context.Context, key string, duration time.Duration) error
 	DeleteSession(ctx context.Context, sessionID string) error
+	GetSession(ctx context.Context, sessionID string) (*SessionData, error)
+	Rotate(ctx context.Context, oldSessionID string, session *SessionData) (string, error)
 	Close() error
 }

@@ -1,0 +1,22 @@
+syntax = "proto3";
+package auth;
+option go_package = "github.com/Mk/viya-proto/pb"; 
+
+service AuthService {
+  rpc ValidateAndRotateSession(ValidateRequest) returns (ValidateResponse);
+}
+
+message ValidateRequest {
+  string session_id = 1;
+  string ip = 2;
+  string user_agent = 3;
+}
+
+message ValidateResponse {
+  bool valid = 1;
+  string user_id = 2;
+  string new_session_id = 3;
+}
+
+//protoc --proto_path=viya-proto ` --go_out=api-gateway/internal/pb --go_opt=paths=source_relative ` --go-grpc_out=api-gateway/internal/pb --go-grpc_opt=paths=source_relative ` viya-proto/auth.proto
+//protoc --proto_path=viya-proto ` --go_out=auth-service/internal/pb --go_opt=paths=source_relative ` --go-grpc_out=auth-service/internal/pb --go-grpc_opt=paths=source_relative ` viya-proto/auth.proto

@@ -37,10 +37,11 @@ func (uc *signInUsecase) Execute(fiberCtx fiber.Ctx, identifier, password string
 	device := fiberCtx.Get("User-Agent")
 	ip := fiberCtx.IP()
 	userData := &domain.SessionData{
-		UserID:    user.ID.String(), // In a real implementation, this would be the user's unique ID from the database
-		CreatedAt: time.Now(),
-		Device:    device,
-		Ip:        ip,
+		UserID:         user.ID.String(), // In a real implementation, this would be the user's unique ID from the database
+		CreatedAt:      time.Now(),
+		FirstCreatedAt: time.Now(),
+		Device:         device,
+		Ip:             ip,
 	}
 	sessionID, err := uc.sessionRepo.CreateSession(fiberCtx.Context(), 24*time.Hour*7, userData)
 	if err != nil {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"api-gateway/internal/config"
+	"api-gateway/internal/grpc_client"
 	"api-gateway/internal/handlers"
 	"api-gateway/internal/middleware"
 	"api-gateway/internal/service"
@@ -9,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -66,7 +68,11 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 	}
 }
 func (s *Server) Start() error {
-
+	go func() {
+		if err := s.Run(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("gRPC sunucusu hatası: %v", err)
+		}
+	}()
 	log.Printf("🌐 HTTP sunucusu %s adresinde dinliyor...", s.cfg.Server.Port)
 	return s.app.Listen(s.Address())
 }
@@ -82,4 +88,13 @@ func (s *Server) FiberApp() *fiber.App {
 
 func (s *Server) Address() string {
 	return fmt.Sprintf("0.0.0.0:%s", s.cfg.Server.Port)
+}
+func (s *Server) Run() error {
+	grpcAddress := "localhost:3001"
+
+	if err := grpc_client.InitAuthClient(grpcAddress); err != nil {
+		log.Fatalf("gRPC istemcisi başlatılamadı: %v", err)
+		return err
+	}
+	return nil
 }

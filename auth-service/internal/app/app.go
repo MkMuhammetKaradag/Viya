@@ -7,6 +7,7 @@ import (
 	"auth-service/internal/graceful"
 	"auth-service/internal/server"
 	"auth-service/internal/session"
+	grpctransport "auth-service/internal/transport/grpc"
 	httptransport "auth-service/internal/transport/http"
 
 	"fmt"
@@ -41,10 +42,11 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	}
 
 	httpRouter := setupHttpRouter(cfg, repo, sessionRepo)
-
+	grpcHandler := grpctransport.NewAuthGrpcHandler(sessionRepo)
 	return &container{server: server.NewServer(
-		getServerConfig(),
+		getServerConfig(cfg),
 		httpRouter,
+		grpcHandler,
 	), repo: repo, session: sessionRepo}, nil
 }
 
@@ -61,9 +63,10 @@ func initStorage(cfg *config.Config) (domain.AuthRepository, domain.SessionRepos
 	return repo, sessionRepo, nil
 }
 
-func getServerConfig() server.ServerConfig {
+func getServerConfig(cfg *config.Config) server.ServerConfig {
 	return server.ServerConfig{
-		Port:         "8082",
+		GrpcPort:     cfg.Srver.GrpcPort,
+		Port:         cfg.Srver.Port,
 		IdleTimeout:  60 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,

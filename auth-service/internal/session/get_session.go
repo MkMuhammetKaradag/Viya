@@ -10,7 +10,8 @@ import (
 )
 
 func (sr *SessionRepository) GetSession(ctx context.Context, sessionID string) (*domain.SessionData, error) {
-	val, err := sr.client.Get(ctx, sessionID).Result()
+	getSessionID := "session:" + sessionID
+	val, err := sr.client.Get(ctx, getSessionID).Result()
 	if err == redis.Nil {
 		return nil, fmt.Errorf("session data not finde")
 	}
