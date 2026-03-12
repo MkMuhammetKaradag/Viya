@@ -20,5 +20,6 @@ type SessionRepository interface {
 	DeleteSession(ctx context.Context, sessionID string) error
 	GetSession(ctx context.Context, sessionID string) (*SessionData, error)
 	Rotate(ctx context.Context, oldSessionID string, session *SessionData) (string, error)
+	DeleteAllSession(ctx context.Context, userID string) error
 	Close() error
 }

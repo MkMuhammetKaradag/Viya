@@ -75,6 +75,7 @@ func AuthMiddleware(protectedPrefixes []string, sessionManager *session.SessionM
 		// }
 
 		// 4. User ID'yi hem context'e hem Header'a koy (Proxy için kritik!)
+		fmt.Println("resp:", resp)
 		c.Locals("user_id", resp.UserId)
 		c.Request().Header.Set("X-User-ID", resp.UserId)
 		return c.Next()

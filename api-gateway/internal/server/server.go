@@ -54,6 +54,8 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 	}))
 	protectedPrefixes := []string{
 		"/api/v1/trips",
+		"/api/v1/auth/signout",
+		"/api/v1/auth/all-signout",
 	}
 	f.Use(middleware.AuthMiddleware(protectedPrefixes, sessionManager))
 

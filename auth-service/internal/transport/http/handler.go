@@ -16,6 +16,7 @@ type AuthHandlers struct {
 	ForgotPassword *controller.ForgotPasswordController
 	ResetPassword  *controller.ResetPasswordController
 	SignOut        *controller.SignOutController
+	AllSignOut     *controller.AllSignOutController
 }
 
 func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository) *Handler {
@@ -26,6 +27,7 @@ func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepositor
 			ForgotPassword: controller.NewForgotPasswordController(usecase.NewForgotPasswordUseCase(repo, sessionRepo)),
 			ResetPassword:  controller.NewResetPasswordController(usecase.NewResetPasswordUseCase(repo)),
 			SignOut:        controller.NewSignOutController(usecase.NewSignOutUseCase(sessionRepo)),
+			AllSignOut:     controller.NewAllSignOutontroller(usecase.NewAllSignOutUseCase(sessionRepo)),
 		},
 	}
 }

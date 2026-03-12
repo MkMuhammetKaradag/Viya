@@ -3,6 +3,7 @@ package handlers
 import (
 	"api-gateway/internal/service"
 	"api-gateway/internal/session"
+	"fmt"
 	"log"
 	"time"
 
@@ -47,6 +48,7 @@ func (h *ProxyHandler) Handle(c fiber.Ctx) error {
 	// Setup Request Headers
 
 	if userID, ok := c.Locals("user_id").(string); ok && userID != "" {
+		fmt.Println("local user:", userID)
 		c.Request().Header.Set("X-User-ID", userID)
 	}
 
