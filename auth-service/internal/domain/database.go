@@ -12,5 +12,6 @@ type AuthRepository interface {
 	GetUserByIdentifier(ctx context.Context, identifier string) (*User, error)
 	CreateForgotPasswordToken(ctx context.Context, userID uuid.UUID, token string) error
 	ResetPassword(ctx context.Context, token, newPassword string) error
+	UpdatePasswordByUserID(ctx context.Context, userID uuid.UUID, newPassword string) error
 	Close() error
 }

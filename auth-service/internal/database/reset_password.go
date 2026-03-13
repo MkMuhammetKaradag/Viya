@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 func (r *Repository) ResetPassword(ctx context.Context, token, newPassword string) error {
@@ -54,6 +56,35 @@ func (r *Repository) ResetPassword(ctx context.Context, token, newPassword strin
 	// 5. Commit
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("transaction commit error: %w", err)
+	}
+
+	return nil
+}
+func (r *Repository) UpdatePasswordByUserID(ctx context.Context, userID uuid.UUID, newPassword string) error {
+	// 1. Şifreyi hashle
+	hashedPassword, err := hashPassword(newPassword)
+	if err != nil {
+		return fmt.Errorf("hashing error: %w", err)
+	}
+
+	// 2. Kullanıcının şifresini güncelle ve kilitleri kaldır
+	updateQuery := `
+        UPDATE users 
+        SET password = $1, 
+            failed_login_attempts = 0, 
+            account_locked = false, 
+            lock_until = NULL 
+        WHERE id = $2`
+
+	result, err := r.db.ExecContext(ctx, updateQuery, hashedPassword, userID)
+	if err != nil {
+		return fmt.Errorf("password update error: %w", err)
+	}
+
+	// 3. Gerçekten bir satır güncellendi mi kontrol et
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("user not found or no changes made")
 	}
 
 	return nil

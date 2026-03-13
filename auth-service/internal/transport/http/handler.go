@@ -25,7 +25,7 @@ func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepositor
 			SignUp:         controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
 			SignIn:         controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
 			ForgotPassword: controller.NewForgotPasswordController(usecase.NewForgotPasswordUseCase(repo, sessionRepo)),
-			ResetPassword:  controller.NewResetPasswordController(usecase.NewResetPasswordUseCase(repo)),
+			ResetPassword:  controller.NewResetPasswordController(usecase.NewResetPasswordUseCase(repo, sessionRepo)),
 			SignOut:        controller.NewSignOutController(usecase.NewSignOutUseCase(sessionRepo)),
 			AllSignOut:     controller.NewAllSignOutontroller(usecase.NewAllSignOutUseCase(sessionRepo)),
 		},

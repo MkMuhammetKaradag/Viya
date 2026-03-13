@@ -2,7 +2,8 @@ package controller
 
 import (
 	"auth-service/internal/transport/http/usecase"
-	"context"
+
+	"github.com/gofiber/fiber/v3"
 )
 
 type ForgotPasswordRequest struct {
@@ -10,7 +11,8 @@ type ForgotPasswordRequest struct {
 }
 
 type ForgotPasswordResponse struct {
-	Message string `json:"message"`
+	Message   string `json:"message"`
+	SessionID string `json:"session_id"`
 }
 
 type ForgotPasswordController struct {
@@ -21,11 +23,17 @@ func NewForgotPasswordController(usecase usecase.ForgotPasswordUseCase) *ForgotP
 	return &ForgotPasswordController{usecase: usecase}
 }
 
-func (c *ForgotPasswordController) Handle(ctx context.Context, req *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
+func (c *ForgotPasswordController) Handle(ctx fiber.Ctx, req *ForgotPasswordRequest) (*ForgotPasswordResponse, error) {
+	clientOS := ctx.Get("X-Platform")
 
-	err := c.usecase.Execute(ctx, req.Identifier)
+	// Karar mekanizması
+	platformType := "web"
+	if clientOS == "ios" || clientOS == "android" {
+		platformType = "mobile"
+	}
+	sessionID, err := c.usecase.Execute(ctx.Context(), req.Identifier, platformType)
 	if err != nil {
 		return nil, err
 	}
-	return &ForgotPasswordResponse{Message: "If an account with that identifier exists, a password reset link has been sent."}, nil
+	return &ForgotPasswordResponse{Message: "If an account with that identifier exists, a password reset link has been sent.", SessionID: sessionID}, nil
 }
