@@ -23,5 +23,10 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672' 
+      - '15672:15672' 
 volumes:
   postgres_data:

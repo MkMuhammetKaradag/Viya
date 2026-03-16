@@ -14,8 +14,11 @@ import (
 type Config struct {
 	Server ServerConfig `mapstructure:"server"`
 	DB     DBConfig     `mapstructure:"db"`
+	RabbitMQ RabbitMQConfig `mapstructure:"rabitmq"`
 }
-
+type RabbitMQConfig struct {
+	URL string `mapstructure:"url"`
+}
 type ServerConfig struct {
 	Port string `mapstructure:"port"`
 }

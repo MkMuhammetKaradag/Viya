@@ -11,11 +11,14 @@ import (
 )
 
 type Config struct {
-	Srver ServerConfig `mapstructure:"server"`
-	Redis RedisConfig  `mapstructure:"redis"`
-	DB    DBConfig     `mapstructure:"db"`
+	Srver    ServerConfig   `mapstructure:"server"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	DB       DBConfig       `mapstructure:"db"`
+	RabbitMQ RabbitMQConfig `mapstructure:"rabitmq"`
 }
-
+type RabbitMQConfig struct {
+	URL string `mapstructure:"url"`
+}
 type ServerConfig struct {
 	Port     string `mapstructure:"port"`
 	GrpcPort string `mapstructure:"grpcPort"`

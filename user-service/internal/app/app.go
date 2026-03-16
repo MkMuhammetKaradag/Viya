@@ -9,12 +9,15 @@ import (
 	"user-service/internal/graceful"
 	"user-service/internal/server"
 	httptransport "user-service/internal/transport/http"
+	"user-service/internal/transport/rabbitmq"
+	"viya/pkg/messaging"
 )
 
 type App struct {
 	server   *server.Server
 	config   *config.Config
 	userRepo domain.UserRepository
+	rabbit   domain.RabbitMQClient
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -32,14 +35,17 @@ func NewApp(cfg *config.Config) (*App, error) {
 type container struct {
 	server   *server.Server
 	userRepo domain.UserRepository
+	rabbit   domain.RabbitMQClient
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
-	repo, err := initStorage(cfg)
+	repo, rabbitClient, err := initStorage(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init progres repository:%w", err)
 	}
 	httpRouter := setupHttpRouter(cfg, repo)
+	rabbitmq.ConfigureRabbitMQ(rabbitClient, repo)
+
 	return &container{
 		userRepo: repo,
 		server: server.NewServer(
@@ -49,9 +55,17 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	}, nil
 }
 
-func initStorage(cfg *config.Config) (domain.UserRepository, error) {
+func initStorage(cfg *config.Config) (domain.UserRepository, domain.RabbitMQClient, error) {
+	repo, err := database.NewRepository(cfg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("postgres init error: %w", err)
+	}
 
-	return database.NewRepository(cfg)
+	rabbitClient, err := messaging.NewRabbitClient(cfg.RabbitMQ.URL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("rabbitmq init error: %w", err)
+	}
+	return repo, rabbitClient, nil
 }
 
 func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository) server.RouterRegister {

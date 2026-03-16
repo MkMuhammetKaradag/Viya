@@ -4,3 +4,6 @@ db:
   password: 'password'
   dbname: 'userdb'
   host: 'localhost'
+
+rabitmq:
+  url: 'amqp://guest:guest@localhost:5672/'

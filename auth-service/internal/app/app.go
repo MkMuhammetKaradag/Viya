@@ -9,9 +9,9 @@ import (
 	"auth-service/internal/session"
 	grpctransport "auth-service/internal/transport/grpc"
 	httptransport "auth-service/internal/transport/http"
-
 	"fmt"
 	"time"
+	"viya/pkg/messaging"
 )
 
 type App struct {
@@ -19,6 +19,7 @@ type App struct {
 	server  *server.Server
 	repo    domain.AuthRepository
 	session domain.SessionRepository
+	rabbit  domain.RabbitMQClient
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -33,15 +34,16 @@ type container struct {
 	server  *server.Server
 	repo    domain.AuthRepository
 	session domain.SessionRepository
+	rabbit  domain.RabbitMQClient
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
-	repo, sessionRepo, err := initStorage(cfg)
+	repo, sessionRepo, rabbitClient, err := initStorage(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
 
-	httpRouter := setupHttpRouter(cfg, repo, sessionRepo)
+	httpRouter := setupHttpRouter(cfg, repo, sessionRepo, rabbitClient)
 	grpcHandler := grpctransport.NewAuthGrpcHandler(sessionRepo)
 	return &container{server: server.NewServer(
 		getServerConfig(cfg),
@@ -50,17 +52,22 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	), repo: repo, session: sessionRepo}, nil
 }
 
-func initStorage(cfg *config.Config) (domain.AuthRepository, domain.SessionRepository, error) {
+func initStorage(cfg *config.Config) (domain.AuthRepository, domain.SessionRepository, domain.RabbitMQClient, error) {
 	repo, err := database.NewRepository(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("postgres init error: %w", err)
+		return nil, nil, nil, fmt.Errorf("postgres init error: %w", err)
 	}
 	sessionRepo, err := session.NewSessionRepository(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("redis init error: %w", err)
+		return nil, nil, nil, fmt.Errorf("redis init error: %w", err)
 	}
 
-	return repo, sessionRepo, nil
+	rabbitClient, err := messaging.NewRabbitClient(cfg.RabbitMQ.URL)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("rabbitmq init error: %w", err)
+	}
+
+	return repo, sessionRepo, rabbitClient, nil
 }
 
 func getServerConfig(cfg *config.Config) server.ServerConfig {
@@ -92,9 +99,9 @@ func (a *App) Start() error {
 	}
 }
 
-func setupHttpRouter(cfg *config.Config, repo domain.AuthRepository, sessionRepo domain.SessionRepository) server.RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, repo domain.AuthRepository, sessionRepo domain.SessionRepository, rabbitClient domain.RabbitMQClient) server.RouteRegistrar {
 
-	handler := httptransport.NewHandlers(repo, sessionRepo)
+	handler := httptransport.NewHandlers(repo, sessionRepo, rabbitClient)
 
 	return httptransport.NewRouter(handler)
 }

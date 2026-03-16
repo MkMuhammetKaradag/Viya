@@ -19,10 +19,10 @@ type AuthHandlers struct {
 	AllSignOut     *controller.AllSignOutController
 }
 
-func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository) *Handler {
+func NewHandlers(repo domain.AuthRepository, sessionRepo domain.SessionRepository, rabbitClient domain.RabbitMQClient) *Handler {
 	return &Handler{
 		Auth: &AuthHandlers{
-			SignUp:         controller.NewSignUpController(usecase.NewSignupUseCase(repo)),
+			SignUp:         controller.NewSignUpController(usecase.NewSignupUseCase(repo, rabbitClient)),
 			SignIn:         controller.NewSignInController(usecase.NewSignInUseCase(repo, sessionRepo)),
 			ForgotPassword: controller.NewForgotPasswordController(usecase.NewForgotPasswordUseCase(repo, sessionRepo)),
 			ResetPassword:  controller.NewResetPasswordController(usecase.NewResetPasswordUseCase(repo, sessionRepo)),
