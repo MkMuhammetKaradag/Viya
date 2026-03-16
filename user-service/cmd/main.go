@@ -1,0 +1,21 @@
+package main
+
+import (
+	"fmt"
+	"user-service/internal/app"
+	"user-service/internal/config"
+)
+
+func main() {
+	cfg, err := config.Load()
+	if err != nil {
+		panic(fmt.Errorf("config load error:%v", err))
+	}
+	app, err := app.NewApp(cfg)
+	if err != nil {
+		panic(err)
+	}
+	if err := app.Start(); err != nil {
+		panic(err)
+	}
+}
