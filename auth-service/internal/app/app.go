@@ -10,6 +10,7 @@ import (
 	grpctransport "auth-service/internal/transport/grpc"
 	httptransport "auth-service/internal/transport/http"
 	"fmt"
+	"log"
 	"time"
 	"viya/pkg/messaging"
 )
@@ -27,7 +28,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &App{server: c.server, repo: c.repo, session: c.session}, nil
+	return &App{server: c.server, repo: c.repo, session: c.session, rabbit: c.rabbit}, nil
 }
 
 type container struct {
@@ -38,9 +39,14 @@ type container struct {
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
-	repo, sessionRepo, rabbitClient, err := initStorage(cfg)
+	repo, sessionRepo, _, err := initStorage(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
+	}
+
+	rabbitClient, err := initMessaging()
+	if err != nil {
+		return nil, fmt.Errorf("init rabbit :%w", err)
 	}
 
 	httpRouter := setupHttpRouter(cfg, repo, sessionRepo, rabbitClient)
@@ -49,7 +55,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		getServerConfig(cfg),
 		httpRouter,
 		grpcHandler,
-	), repo: repo, session: sessionRepo}, nil
+	), repo: repo, session: sessionRepo, rabbit: rabbitClient}, nil
 }
 
 func initStorage(cfg *config.Config) (domain.AuthRepository, domain.SessionRepository, domain.RabbitMQClient, error) {
@@ -62,12 +68,24 @@ func initStorage(cfg *config.Config) (domain.AuthRepository, domain.SessionRepos
 		return nil, nil, nil, fmt.Errorf("redis init error: %w", err)
 	}
 
-	rabbitClient, err := messaging.NewRabbitClient(cfg.RabbitMQ.URL)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("rabbitmq init error: %w", err)
-	}
+	// rabbitClient, err := messaging.NewRabbitClient(cfg.RabbitMQ.URL)
+	// if err != nil {
+	// 	return nil, nil, nil, fmt.Errorf("rabbitmq init error: %w", err)
+	// }
 
-	return repo, sessionRepo, rabbitClient, nil
+	return repo, sessionRepo, nil, nil
+}
+
+func initMessaging() (domain.RabbitMQClient, error) {
+	config := messaging.NewDefaultConfig("")
+	config.RetryTypes = []messaging.MessageType{}
+	rabbitMQ, err := messaging.NewRabbitClient(config, messaging.AuthService)
+	if err != nil {
+		log.Fatalf("RabbitMQ bağlantısı kurulamadı: %v", err)
+		return nil, err
+	}
+	return rabbitMQ, nil
+
 }
 
 func getServerConfig(cfg *config.Config) server.ServerConfig {
@@ -88,7 +106,7 @@ func (a *App) Start() error {
 
 	// 2. Shutdown sinyalini burada (ana akışta) bekle
 	// Bu fonksiyon bloklayıcı (blocking) olmalı
-	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.repo, a.session)
+	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.repo, a.session, a.rabbit)
 
 	// Eğer server Start sırasında bir hata aldıysa (örn: port meşgul) onu dön
 	select {

@@ -3,28 +3,36 @@ package messaging
 import (
 	"context"
 	"encoding/json"
-	
+	"log"
+	"sync"
+
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type RabbitClient struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
+	config    Config
+	mu        sync.Mutex
+	service   ServiceType
+	conn      *amqp.Connection
+	channel   *amqp.Channel
+	reconnect chan bool
+	closed    bool
 }
 
 // NewRabbitClient, bağlantıyı kurar ve kanalı açar.
-func NewRabbitClient(url string) (*RabbitClient, error) {
-	conn, err := amqp.Dial(url)
-	if err != nil {
+func NewRabbitClient(config Config, serviceType ServiceType) (*RabbitClient, error) {
+	r := &RabbitClient{
+		config:    config,
+		service:   serviceType,
+		reconnect: make(chan bool),
+	}
+	if err := r.connect(serviceType); err != nil {
 		return nil, err
 	}
-	ch, err := conn.Channel()
-	if err != nil {
-		return nil, err
-	}
-	return &RabbitClient{conn: conn, channel: ch}, nil
+	go r.monitorConnection(serviceType)
+	return r, nil
 }
 
 // Publish, senin Kafka'daki gibi mesajı JSON'a çevirip kuyruğa atar.
@@ -57,8 +65,29 @@ func (r *RabbitClient) Consume(queueName string, handler func(data []byte) error
 			} else {
 				// Hata varsa 5 saniye bekleyip tekrar denemesi için Nack yapabilirsin
 				time.Sleep(5 * time.Second)
-				d.Nack(false, true) 
+				d.Nack(false, true)
 			}
 		}
 	}()
+}
+
+func (r *RabbitClient) Close() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	r.closed = true // monitorConnection'ın durması için
+
+	if r.channel != nil {
+		if err := r.channel.Close(); err != nil {
+			log.Printf("RabbitMQ channel close error: %v", err)
+		}
+	}
+
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

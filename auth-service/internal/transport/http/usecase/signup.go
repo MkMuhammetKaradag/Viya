@@ -4,6 +4,8 @@ import (
 	"auth-service/internal/domain"
 	"context"
 	"fmt"
+	"log"
+	"viya/pkg/messaging"
 
 	"github.com/google/uuid"
 )
@@ -35,10 +37,21 @@ func (uc *signupUseCase) Execute(ctx context.Context, username, email, password 
 	if err := uc.repo.SignUp(ctx, username, email, password); err != nil {
 		return fmt.Errorf("signup error: %w", err)
 	}
-	event := UserCreatedEvent{ID: uuid.New(), Email: email}
-	err := uc.rabbitClient.Publish("user_created", event)
+	userCreatedMessage := messaging.Message{
+		Type:       messaging.AuthTypes.CreatedUser,
+		ToServices: []messaging.ServiceType{messaging.UserService},
+		Data: map[string]interface{}{
+			"id":       uuid.New(),
+			"email":    email,
+			"username": username,
+		},
+		Critical: true,
+	}
+
+	err := uc.rabbitClient.PublishMessage(ctx, userCreatedMessage)
 	if err != nil {
-		fmt.Println("rabbit err ", err)
+		log.Printf("User creation message could not be sent: %v", err)
+		//return err
 	}
 	return nil
 }
