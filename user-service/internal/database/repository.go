@@ -18,6 +18,10 @@ func NewRepository(cfg *config.Config) (domain.UserRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if err := runMigrations(db); err != nil {
+		return nil, err
+	}
 	repo := &Repository{
 		db: db,
 	}

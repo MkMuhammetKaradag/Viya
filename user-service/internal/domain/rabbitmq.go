@@ -24,3 +24,6 @@ type RabbitMQClient interface {
 type MessageHandler interface {
 	Handle(msg messaging.Message) error
 }
+type RabbitRouter interface {
+	Route(msg messaging.Message) error
+}

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"user-service/internal/domain"
 
 	"github.com/google/uuid"
@@ -21,8 +20,6 @@ func NewUserCreatedUseCase(repository domain.UserRepository) CreateUserUseCase {
 	}
 }
 
-func (u *createUserUseCase) Execute(ctx context.Context, userID uuid.UUID, userName, email string) error {
-	fmt.Println("save user email", email, " userid:", userID, "-user name:", userName)
-
-	return nil
+func (uc *createUserUseCase) Execute(ctx context.Context, userID uuid.UUID, userName, email string) error {
+	return uc.repository.CreateUser(ctx, userID, userName, email)
 }

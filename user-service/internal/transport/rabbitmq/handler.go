@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"user-service/internal/domain"
-	controller "user-service/internal/transport/rabbitmq/handler"
+	controller "user-service/internal/transport/rabbitmq/controller"
 	"user-service/internal/transport/rabbitmq/usecase"
 	"viya/pkg/messaging"
 )

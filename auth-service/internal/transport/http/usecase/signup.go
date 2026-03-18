@@ -34,21 +34,22 @@ func (uc *signupUseCase) Execute(ctx context.Context, username, email, password 
 		"password:", password,
 	)
 
-	if err := uc.repo.SignUp(ctx, username, email, password); err != nil {
+	userID, err := uc.repo.SignUp(ctx, username, email, password)
+	if err != nil {
 		return fmt.Errorf("signup error: %w", err)
 	}
 	userCreatedMessage := messaging.Message{
 		Type:       messaging.AuthTypes.CreatedUser,
 		ToServices: []messaging.ServiceType{messaging.UserService},
 		Data: map[string]interface{}{
-			"id":       uuid.New(),
+			"id":       userID,
 			"email":    email,
 			"username": username,
 		},
 		Critical: true,
 	}
 
-	err := uc.rabbitClient.PublishMessage(ctx, userCreatedMessage)
+	err = uc.rabbitClient.PublishMessage(ctx, userCreatedMessage)
 	if err != nil {
 		log.Printf("User creation message could not be sent: %v", err)
 		//return err

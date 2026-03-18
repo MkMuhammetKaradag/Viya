@@ -23,28 +23,27 @@ func (h *CreatedUserHandler) Handle(msg messaging.Message) error {
 
 	data, ok := msg.Data.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("err")
+		return fmt.Errorf("invalid message data format")
 	}
 
-	email, ok := data["email"].(string)
-	if !ok {
-		return fmt.Errorf("err")
+	// Tek bir hata kontrolü ile ilerlemek için:
+	val := func(key string) string {
+		s, _ := data[key].(string)
+		return s
 	}
 
-	id, ok := data["id"].(string)
-	if !ok {
-		return fmt.Errorf("err")
+	idStr := val("id")
+	email := val("email")
+	username := val("username")
+
+	if idStr == "" || email == "" {
+		return fmt.Errorf("missing required fields in message")
 	}
 
-	idUUID, err := uuid.Parse(id)
+	idUUID, err := uuid.Parse(idStr)
 	if err != nil {
-		return fmt.Errorf("err")
+		return fmt.Errorf("invalid uuid: %w", err)
 	}
+	return h.usecase.Execute(context.Background(), idUUID, username, email)
 
-	userName, ok := data["username"].(string)
-	if !ok {
-		return fmt.Errorf("err")
-	}
-	ctx := context.Background()
-	return h.usecase.Execute(ctx, idUUID, userName, email)
 }

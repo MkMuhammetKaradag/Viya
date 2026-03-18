@@ -15,10 +15,11 @@ import (
 )
 
 type App struct {
-	server   *server.Server
-	config   *config.Config
-	userRepo domain.UserRepository
-	rabbit   domain.RabbitMQClient
+	server       *server.Server
+	config       *config.Config
+	userRepo     domain.UserRepository
+	rabbit       domain.RabbitMQClient
+	rabbitRouter domain.RabbitRouter
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -27,17 +28,19 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, fmt.Errorf("app failed:%w", err)
 	}
 	return &App{
-		config:   cfg,
-		userRepo: c.userRepo,
-		server:   c.server,
-		rabbit:   c.rabbit,
+		config:       cfg,
+		userRepo:     c.userRepo,
+		server:       c.server,
+		rabbit:       c.rabbit,
+		rabbitRouter: c.rabbitRouter,
 	}, nil
 }
 
 type container struct {
-	server   *server.Server
-	userRepo domain.UserRepository
-	rabbit   domain.RabbitMQClient
+	server       *server.Server
+	userRepo     domain.UserRepository
+	rabbit       domain.RabbitMQClient
+	rabbitRouter domain.RabbitRouter
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
@@ -46,15 +49,9 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		return nil, fmt.Errorf("init progres repository:%w", err)
 	}
 
-	rabbitRouter := setupRabbitRouter(cfg, repo)
-	messageRouter := func(msg messaging.Message) error {
-		handler, ok := rabbitRouter[msg.Type]
-		if !ok {
-			return nil
-		}
-		return handler.Handle(msg)
-	}
-	rabbitClient, err := initMessaging(messageRouter)
+	router := rabbitmq.NewRabbitRouter(repo)
+
+	rabbitClient, err := initMessaging()
 	if err != nil {
 		return nil, fmt.Errorf("init rabbit :%w", err)
 	}
@@ -67,7 +64,8 @@ func buildContainer(cfg *config.Config) (*container, error) {
 			getServerConfig(cfg),
 			httpRouter,
 		),
-		rabbit: rabbitClient,
+		rabbit:       rabbitClient,
+		rabbitRouter: router,
 	}, nil
 }
 
@@ -83,28 +81,10 @@ func initStorage(cfg *config.Config) (domain.UserRepository, domain.RabbitMQClie
 	// }
 	return repo, nil, nil
 }
-func initMessaging(handler func(messaging.Message) error) (domain.RabbitMQClient, error) {
-	config := messaging.NewDefaultConfig("")
-	config.RetryTypes = []messaging.MessageType{}
-	rabbitMQ, err := messaging.NewRabbitClient(config, messaging.UserService)
-	if err != nil {
-		log.Fatalf("RabbitMQ bağlantısı kurulamadı: %v", err)
-		return nil, err
-	}
-
-	go func() {
-
-		err = rabbitMQ.ConsumeMessages(func(msg messaging.Message) error {
-
-			return handler(msg)
-
-		})
-		if err != nil {
-			log.Fatal("Mesaj dinleyici başlatılamadı:", err)
-		}
-
-	}()
-	return rabbitMQ, nil
+func initMessaging() (domain.RabbitMQClient, error) {
+	rabbitCfg := messaging.NewDefaultConfig("")
+	// Servis adını ve diğer ayarları ver
+	return messaging.NewRabbitClient(rabbitCfg, messaging.UserService)
 
 }
 func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository) server.RouterRegister {
@@ -126,6 +106,12 @@ func getServerConfig(cfg *config.Config) server.ServerConfig {
 
 func (a *App) Start() error {
 	serverErr := make(chan error, 1)
+	go func() {
+		log.Println("RabbitMQ Consumer başlatılıyor...")
+		if err := a.rabbit.ConsumeMessages(a.rabbitRouter.Route); err != nil {
+			log.Printf("Consumer hatası: %v", err)
+		}
+	}()
 	go func() {
 		serverErr <- a.server.Start()
 	}()
