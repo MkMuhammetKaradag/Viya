@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	DB     DBConfig     `mapstructure:"db"`
-	RabbitMQ RabbitMQConfig `mapstructure:"rabitmq"`
+	Server     ServerConfig     `mapstructure:"server"`
+	DB         DBConfig         `mapstructure:"db"`
+	RabbitMQ   RabbitMQConfig   `mapstructure:"rabitmq"`
+	Cloudinary CloudinaryConfig `mapstructure:"cloudinary"`
 }
 type RabbitMQConfig struct {
 	URL string `mapstructure:"url"`
@@ -22,7 +23,11 @@ type RabbitMQConfig struct {
 type ServerConfig struct {
 	Port string `mapstructure:"port"`
 }
-
+type CloudinaryConfig struct {
+	CloudName string `mapstructure:"cloudName"`
+	APIKey    string `mapstructure:"apiKey"`
+	APISecret string `mapstructure:"apiSecret"`
+}
 type DBConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     string `mapstructure:"port"`
@@ -44,7 +49,7 @@ func Load() (*Config, error) {
 	configDir := filepath.Dir(file)
 	v.AddConfigPath(configDir)
 
-	files := []string{"server.yaml", "database.yaml"}
+	files := []string{"server.yaml", "database.yaml", "cloudinary.yaml"}
 
 	for _, file := range files {
 		v.SetConfigFile(filepath.Join(configDir, file))

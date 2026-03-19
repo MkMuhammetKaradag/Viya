@@ -56,6 +56,7 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		"/api/v1/trips",
 		"/api/v1/auth/signout",
 		"/api/v1/auth/all-signout",
+		"/api/v1/users/upload-avatar",
 	}
 	f.Use(middleware.AuthMiddleware(protectedPrefixes, sessionManager))
 

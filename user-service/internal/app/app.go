@@ -8,6 +8,7 @@ import (
 	"user-service/internal/database"
 	"user-service/internal/domain"
 	"user-service/internal/graceful"
+	"user-service/internal/infrastructure/img"
 	"user-service/internal/server"
 	httptransport "user-service/internal/transport/http"
 	"user-service/internal/transport/rabbitmq"
@@ -48,7 +49,11 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init progres repository:%w", err)
 	}
+	cldSvc, err := img.NewCloudinary(cfg.Cloudinary.CloudName, cfg.Cloudinary.APIKey, cfg.Cloudinary.APISecret)
 
+	if err != nil {
+		return nil, err
+	}
 	router := rabbitmq.NewRabbitRouter(repo)
 
 	rabbitClient, err := initMessaging()
@@ -56,7 +61,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		return nil, fmt.Errorf("init rabbit :%w", err)
 	}
 
-	httpRouter := setupHttpRouter(cfg, repo)
+	httpRouter := setupHttpRouter(cfg, repo, cldSvc)
 
 	return &container{
 		userRepo: repo,
@@ -87,8 +92,8 @@ func initMessaging() (domain.RabbitMQClient, error) {
 	return messaging.NewRabbitClient(rabbitCfg, messaging.UserService)
 
 }
-func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository) server.RouterRegister {
-	handler := httptransport.NewHandlers(userRepo)
+func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService) server.RouterRegister {
+	handler := httptransport.NewHandlers(userRepo, cloudinaryService)
 	return httptransport.NewRouter(handler)
 }
 

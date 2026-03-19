@@ -14,6 +14,8 @@ func main() {
 	application := app.New(cfg)
 	application.RegisterService("trips-service", []string{"http://localhost:8081"}, "/api/v1/trips")
 	application.RegisterService("auth-service", []string{"http://localhost:8082"}, "/api/v1/auth")
+	application.RegisterService("user-service", []string{"http://localhost:8083"}, "/api/v1/users")
+	// application.RegisterService("auth-service", []string{"http://localhost:8082"}, "/api/v1")
 
 	if err := application.Start(); err != nil {
 		log.Fatalf("server stopped with error: %v", err)
