@@ -1,0 +1,22 @@
+package domain
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type User struct {
+	ID          uuid.UUID `json:"id" db:"id"`
+	Email       string    `json:"email" db:"email"`
+	Username    string    `json:"username" db:"username"`
+	FirstName   *string   `json:"first_name" db:"first_name"`
+	LastName    *string   `json:"last_name" db:"last_name"`
+	Bio         *string   `json:"bio" db:"bio"`
+	Location    *string   `json:"location" db:"location"`
+	Website     *string   `json:"website" db:"website"`
+	AvatarURL   *string   `json:"avatar_url" db:"avatar_url"`
+	Preferences []string  `json:"preferences" db:"preferences"` // JSONB için slice
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+}

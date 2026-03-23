@@ -13,6 +13,7 @@ type Handler struct {
 type UserHandlers struct {
 	UploadAvatar  *controller.UploadAvatarController
 	UpdateProfile *controller.UpdateProfileController
+	GetMe         *controller.GetMeController
 }
 
 func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService) *Handler {
@@ -20,6 +21,7 @@ func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.Cloudi
 		User: &UserHandlers{
 			UploadAvatar:  controller.NewUploadAvatarController(usecase.NewUploadAvatarUseCase(userRepo, cloudinaryService)),
 			UpdateProfile: controller.NewUpdateProfileController(usecase.NewUpdateProfileUseCase(userRepo)),
+			GetMe:         controller.NewGetMeController(usecase.NewGetMeUseCase(userRepo)),
 		},
 	}
 }

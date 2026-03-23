@@ -25,6 +25,7 @@ func (r *Router) Register(app *fiber.App) {
 	{
 		users.Post("/upload-avatar", handler.HandleWithFiber[controller.UploadAvatarRequest, controller.UploadAvatarResponse](h.User.UploadAvatar))
 		users.Put("/update-profile", handler.HandleWithFiber[controller.UpdateProfileRequest, controller.UpdateProfileResponse](h.User.UpdateProfile))
+		users.Get("/me", handler.HandleWithFiber[controller.GetMeRequest, controller.GetMeResponse](h.User.GetMe))
 	}
 
 }
