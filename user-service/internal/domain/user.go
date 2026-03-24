@@ -16,6 +16,7 @@ type User struct {
 	Location    *string   `json:"location" db:"location"`
 	Website     *string   `json:"website" db:"website"`
 	AvatarURL   *string   `json:"avatar_url" db:"avatar_url"`
+	BannerURL   *string   `json:"banner_url" db:"banner_url"`
 	Preferences []string  `json:"preferences" db:"preferences"` // JSONB için slice
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`

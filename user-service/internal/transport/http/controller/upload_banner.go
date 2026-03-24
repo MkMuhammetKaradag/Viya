@@ -8,24 +8,24 @@ import (
 	"github.com/google/uuid"
 )
 
-type UploadAvatarRequest struct {
+type UploadBannerRequest struct {
 }
 
-type UploadAvatarController struct {
-	usecase usecase.UploadAvatarUseCase
+type UploadBannerController struct {
+	usecase usecase.UploadBannerUseCase
 }
 
-type UploadAvatarResponse struct {
+type UploadBannerResponse struct {
 	Message string `json:"message"`
 }
 
-func NewUploadAvatarController(usecase usecase.UploadAvatarUseCase) *UploadAvatarController {
-	return &UploadAvatarController{
+func NewUploadBannerController(usecase usecase.UploadBannerUseCase) *UploadBannerController {
+	return &UploadBannerController{
 		usecase: usecase,
 	}
 }
 
-func (h *UploadAvatarController) Handle(fbrctx fiber.Ctx, req *UploadAvatarRequest) (*UploadAvatarResponse, error) {
+func (h *UploadBannerController) Handle(fbrctx fiber.Ctx, req *UploadBannerRequest) (*UploadBannerResponse, error) {
 	fmt.Println("sdsd")
 	userIDStr := fbrctx.Get("X-User-ID")
 	userID, err := uuid.Parse(userIDStr)
@@ -33,7 +33,7 @@ func (h *UploadAvatarController) Handle(fbrctx fiber.Ctx, req *UploadAvatarReque
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid or missing user id")
 	}
 
-	fileHeader, err := fbrctx.FormFile("avatar")
+	fileHeader, err := fbrctx.FormFile("banner")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -50,5 +50,5 @@ func (h *UploadAvatarController) Handle(fbrctx fiber.Ctx, req *UploadAvatarReque
 	if err := h.usecase.Execute(fbrctx.Context(), userID, file); err != nil {
 		return nil, err
 	}
-	return &UploadAvatarResponse{Message: "Avatar uploaded successfully"}, nil
+	return &UploadBannerResponse{Message: "Avatar Banner successfully"}, nil
 }

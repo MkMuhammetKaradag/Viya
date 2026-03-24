@@ -39,6 +39,21 @@ func (cld *Cloudinary) UploadAvatar(ctx context.Context, file multipart.File, us
 	}
 	return uploadRes.SecureURL, nil
 }
+func (cld *Cloudinary) UploadBanner(ctx context.Context, file multipart.File, userID string) (string, error) {
+
+	uploadRes, err := cld.client.Upload.Upload(ctx, file, uploader.UploadParams{
+		Folder:         "profile_banner",
+		PublicID:       userID + "_banner",
+		Overwrite:      api.Bool(true),
+		Invalidate:     api.Bool(true),
+		Transformation: "c_fill,g_auto,w_1200,h_400,q_auto,f_auto",
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("cloudinary upload: %w", err)
+	}
+	return uploadRes.SecureURL, nil
+}
 func (cld *Cloudinary) UplodImage(ctx context.Context, fileHeader *multipart.FileHeader, opts domain.UplodImageOptions) (string, string, error) {
 	return "", "", nil
 }
