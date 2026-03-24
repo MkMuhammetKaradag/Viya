@@ -43,13 +43,13 @@ func (r *Repository) AddWaypoint(ctx context.Context, wp *domain.Waypoint) (uuid
 
 	// 2. ADIM: Kaydı Gerçekleştir
 	insertQuery := `
-        INSERT INTO waypoints (trip_id, title, latitude, longitude, description, order_index) 
-        VALUES ($1, $2, $3, $4, $5, $6) 
+        INSERT INTO waypoints (trip_id, title, latitude, longitude, description, order_index,note) 
+        VALUES ($1, $2, $3, $4, $5, $6,$7) 
         RETURNING id`
 
 	var wpID uuid.UUID
 	err = tx.QueryRowContext(ctx, insertQuery,
-		wp.TripID, wp.Title, wp.Latitude, wp.Longitude, wp.Description, finalOrderIndex,
+		wp.TripID, wp.Title, wp.Latitude, wp.Longitude, wp.Description, finalOrderIndex, wp.Note,
 	).Scan(&wpID)
 
 	if err != nil {

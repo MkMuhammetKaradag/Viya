@@ -18,7 +18,8 @@ type tripHandlers struct {
 
 type waypointHandlers struct {
 	Add       *controller.AddWayPointController
-	AddPhotos *controller.AddWayPointPhotosController
+	
+	//AddPhotos *controller.AddWayPointPhotosController
 	Delete    *controller.DeleteWaypointController
 	Reorder   *controller.ReorderController
 	Update    *controller.UpdateWaypointController
@@ -32,8 +33,8 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Get:    controller.NewGetTripController(usecase.NewGetTripUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
-			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo)),
-			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
+			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),
+			//AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
 			Delete:    controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
 			Reorder:   controller.NewReorderController(usecase.NewReorderUseCase(repo)),
 			Update:    controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
