@@ -22,7 +22,7 @@ func NewCreateTripUseCase(tripRepo domain.TripRepository) CreateTripUseCase {
 func (uc *createTripUseCase) Execute(ctx context.Context, trip *domain.Trip) (uuid.UUID, error) {
 	id, err := uc.tripRepo.CreateTrip(ctx, trip)
 	if err != nil {
-		return id, err
+		return uuid.Nil, err
 	}
 	return id, nil
 }

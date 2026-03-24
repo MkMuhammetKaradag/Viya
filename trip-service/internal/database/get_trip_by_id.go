@@ -53,7 +53,7 @@ func (r *Repository) GetTripByID(ctx context.Context, tripID uuid.UUID) (*domain
 
 	// JSON'u Go struct'ına unmarshal ediyoruz.
 	// domain.Waypoint struct'ında Photos []string alanı olduğundan emin olmalısın.
-	if err := json.Unmarshal(waypointsJSON, &trip.WayPoints); err != nil {
+	if err := json.Unmarshal(waypointsJSON, &trip.Waypoints); err != nil {
 		return nil, fmt.Errorf("waypoints unmarshal error: %w", err)
 	}
 

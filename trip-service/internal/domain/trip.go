@@ -6,26 +6,38 @@ import (
 	"github.com/google/uuid"
 )
 
+//(gis) PostGIS   unutma! not
+
 type Trip struct {
-	ID          uuid.UUID `json:"id"`
-	UserID      uuid.UUID `json:"user_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description,omitempty"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID            uuid.UUID `json:"id" db:"id"`
+	UserID        uuid.UUID `json:"user_id" db:"user_id"`
+	Title         string    `json:"title" db:"title"`
+	Description   string    `json:"description" db:"description"`
+	CoverImageURL *string   `json:"cover_image_url" db:"cover_image_url"`
+	IsActive      bool      `json:"is_active" db:"is_active"`
+	IsPublic      bool      `json:"is_public" db:"is_public"`
+	PublishedAt   time.Time `json:"published_at" db:"published_at"`
+	ViewCount     int       `json:"view_count" db:"view_count"`
+	CreatedAt     time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 
-	WayPoints []Waypoint `json:"waypoints,omitempty"`
+	Waypoints []Waypoint `json:"waypoints,omitempty"`
 }
-
+type Photo struct {
+	ID         uuid.UUID `json:"id" db:"id"`
+	WaypointID uuid.UUID `json:"waypoint_id" db:"waypoint_id"`
+	URL        string    `json:"url" db:"url"`
+}
 type Waypoint struct {
-	ID          uuid.UUID `json:"id"`
-	TripID      uuid.UUID `json:"trip_id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	OrderIndex  int       `json:"order_index,omitempty" `
-	Latitude    float64   `json:"latitude"`
-	Longitude   float64   `json:"longitude"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID          uuid.UUID `json:"id" db:"id"`
+	TripID      uuid.UUID `json:"trip_id" db:"trip_id"`
+	Title       string    `json:"title" db:"title"`
+	Description string    `json:"description" db:"description"`
+	OrderIndex  int       `json:"order_index" db:"order_index"`
+	Latitude    float64   `json:"latitude" db:"latitude"`
+	Longitude   float64   `json:"longitude" db:"longitude"`
+	Note        string    `json:"note" db:"note"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 
-	Photos []string `json:"photos"`
+	Photos []Photo `json:"photos,omitempty"`
 }
