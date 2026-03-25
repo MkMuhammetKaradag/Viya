@@ -27,9 +27,9 @@ func newPostgresDB(cfg *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("ping failed: %w", err)
 	}
 
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
 
 	log.Println("Connected to PostgreSQL")
 	return db, nil

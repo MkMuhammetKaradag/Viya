@@ -41,3 +41,12 @@ type Waypoint struct {
 
 	Photos []Photo `json:"photos,omitempty"`
 }
+type TripSummary struct {
+	ID            uuid.UUID `json:"id"`
+	Title         string    `json:"title"`
+	CoverImageURL *string   `json:"cover_image_url"`
+	IsPublic      bool      `json:"is_public"`
+	ViewCount     int       `json:"view_count"`
+	WaypointCount int       `json:"waypoint_count"`
+	CreatedAt     time.Time `json:"created_at"`
+}

@@ -49,7 +49,16 @@ func NewCreateTripController(usecase usecase.CreateTripUseCase) *CreateTripContr
 
 func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) (*CreateTripResponse, error) {
 
+	// fmt.Println("--- YENİ İSTEK GELDİ ---") // Bu satırı ekle
+
+	// if req == nil {
+	// 	 fmt.Println("HATA: Request body boş!")
+	// 	return nil, fiber.ErrBadRequest
+	// }
+
 	userIDStr := fbrctx.Get("X-User-ID")
+	// fmt.Println("Gelen User ID:", userIDStr)
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid or missing user id")

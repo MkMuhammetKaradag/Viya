@@ -12,32 +12,34 @@ type Handlers struct {
 }
 
 type tripHandlers struct {
-	Create *controller.CreateTripController
-	Get    *controller.GetTripController
+	Create       *controller.CreateTripController
+	Get          *controller.GetTripController
+	GetUserTrips *controller.GetUserTripsController
 }
 
 type waypointHandlers struct {
-	Add       *controller.AddWayPointController
-	
+	Add *controller.AddWayPointController
+
 	//AddPhotos *controller.AddWayPointPhotosController
-	Delete    *controller.DeleteWaypointController
-	Reorder   *controller.ReorderController
-	Update    *controller.UpdateWaypointController
+	Delete  *controller.DeleteWaypointController
+	Reorder *controller.ReorderController
+	Update  *controller.UpdateWaypointController
 }
 
 func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker) *Handlers {
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
-			Create: controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
-			Get:    controller.NewGetTripController(usecase.NewGetTripUseCase(repo)),
+			Create:       controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
+			Get:          controller.NewGetTripController(usecase.NewGetTripUseCase(repo)),
+			GetUserTrips: controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
-			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),
+			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),
 			//AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
-			Delete:    controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
-			Reorder:   controller.NewReorderController(usecase.NewReorderUseCase(repo)),
-			Update:    controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
+			Delete:  controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
+			Reorder: controller.NewReorderController(usecase.NewReorderUseCase(repo)),
+			Update:  controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
 		},
 	}
 }

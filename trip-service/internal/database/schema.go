@@ -41,7 +41,8 @@ const (
 	photosTable = `CREATE TABLE IF NOT EXISTS photos (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		waypoint_id UUID REFERENCES waypoints(id) ON DELETE CASCADE,
-		url TEXT NOT NULL
+		url TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
 	tripWiewsTable = `

@@ -53,7 +53,9 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		MaxAge: 3600,
 	}))
 	protectedPrefixes := []string{
+		"/api/v1/trips/me",
 		"/api/v1/trips",
+
 		"/api/v1/waypoints",
 		"/api/v1/auth/signout",
 		"/api/v1/auth/all-signout",
