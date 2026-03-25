@@ -12,17 +12,21 @@ import (
 	"trip-service/internal/domain"
 	"trip-service/internal/graceful"
 	"trip-service/internal/server"
+	"viya/pkg/messaging"
 
 	httptransport "trip-service/internal/transport/http"
+	"trip-service/internal/transport/rabbitmq"
 
 	"github.com/hibiken/asynq"
 )
 
 type App struct {
-	config    *config.Config
-	processor *worker.TaskProcessor
-	server    *server.Server
-	repo      domain.TripRepository
+	config       *config.Config
+	processor    *worker.TaskProcessor
+	server       *server.Server
+	repo         domain.TripRepository
+	rabbit       domain.RabbitMQClient
+	rabbitRouter domain.RabbitRouter
 	// Add your application fields here
 }
 
@@ -32,15 +36,20 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, fmt.Errorf("bootstrap failed: %w", err)
 	}
 	return &App{config: cfg,
-		processor: c.processor,
-		server:    c.server}, nil
+		processor:    c.processor,
+		server:       c.server,
+		rabbit:       c.rabbit,
+		rabbitRouter: c.rabbitRouter,
+	}, nil
 }
 
 type container struct {
-	tripRepo  domain.TripRepository
-	processor *worker.TaskProcessor
-	server    *server.Server
-	repo      domain.TripRepository
+	tripRepo     domain.TripRepository
+	processor    *worker.TaskProcessor
+	server       *server.Server
+	repo         domain.TripRepository
+	rabbit       domain.RabbitMQClient
+	rabbitRouter domain.RabbitRouter
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
@@ -52,6 +61,12 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, err
 	}
+	router := rabbitmq.NewRabbitRouter(repo)
+	rabbitClient, err := initMessaging()
+	if err != nil {
+		return nil, fmt.Errorf("init rabbit :%w", err)
+	}
+
 	redisOpt := asynq.RedisClientOpt{Addr: "localhost:6379", DB: 2, Password: "password"}
 
 	asynqClient := asynq.NewClient(redisOpt)
@@ -67,10 +82,12 @@ func buildContainer(cfg *config.Config) (*container, error) {
 
 	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
-		tripRepo:  repo,
-		processor: processor,
-		server:    server.NewServer(getServerConfig(cfg), httpRouter),
-		repo:      repo,
+		tripRepo:     repo,
+		processor:    processor,
+		server:       server.NewServer(getServerConfig(cfg), httpRouter),
+		repo:         repo,
+		rabbit:       rabbitClient,
+		rabbitRouter: router,
 	}, nil
 }
 func getServerConfig(cfg *config.Config) server.Config {
@@ -90,15 +107,32 @@ func initStorage(cfg *config.Config) (domain.TripRepository, error) {
 	return repo, nil
 }
 
-func (a *App) Start() error {
-	// ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
-	go graceful.WaitForShutdown(a.server.FiberApp(), a.processor, a.repo, 5*time.Second)
-	if err := a.server.Start(); err != nil {
-		return fmt.Errorf("task processor error: %w", err)
-	}
+func initMessaging() (domain.RabbitMQClient, error) {
+	rabbitCfg := messaging.NewDefaultConfig("")
+	// Servis adını ve diğer ayarları ver
+	return messaging.NewRabbitClient(rabbitCfg, messaging.TripService)
 
-	return nil
+}
+
+func (a *App) Start() error {
+	serverErr := make(chan error, 1)
+	go func() {
+		log.Println("RabbitMQ Consumer başlatılıyor...")
+		if err := a.rabbit.ConsumeMessages(a.rabbitRouter.Route); err != nil {
+			log.Printf("Consumer hatası: %v", err)
+		}
+	}()
+
+	go func() {
+		serverErr <- a.server.Start()
+	}()
+	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.processor, a.repo)
+	select {
+	case err := <-serverErr:
+		return err
+	default:
+		return nil
+	}
 }
 func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker) server.RouteRegistrar {
 

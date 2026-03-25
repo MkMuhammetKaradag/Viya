@@ -43,4 +43,28 @@ const (
 		waypoint_id UUID REFERENCES waypoints(id) ON DELETE CASCADE,
 		url TEXT NOT NULL
 	)`
+
+	tripWiewsTable = `
+		CREATE TABLE  IF NOT EXISTS  trip_views (
+			trip_id UUID REFERENCES trips(id),
+			user_id UUID REFERENCES users(id),
+			viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (trip_id, user_id) -- Bu ikili UNIQUE olmalı ki aynı kişi 2. kez eklenemesin
+		)
+	`
+	userasTable = `
+	CREATE TABLE IF NOT EXISTS users (
+		id UUID PRIMARY KEY, -- Auth servisindeki ID ile aynı olmalı
+		username VARCHAR(50) NOT NULL,
+		email VARCHAR(100),
+		avatar_url TEXT,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
+	`
+
+	tripWiewsConflict = `
+		INSERT INTO trip_views (trip_id, user_id) 
+		VALUES ($1, $2) 
+		ON CONFLICT (trip_id, user_id) DO NOTHING;
+	`
 )

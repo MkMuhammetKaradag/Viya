@@ -22,3 +22,4 @@ func (r *Repository) GetWaypointByID(ctx context.Context, id uuid.UUID) (*domain
 	}
 	return &wp, nil
 }
+

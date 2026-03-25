@@ -40,7 +40,7 @@ func (uc *signupUseCase) Execute(ctx context.Context, username, email, password 
 	}
 	userCreatedMessage := messaging.Message{
 		Type:       messaging.AuthTypes.CreatedUser,
-		ToServices: []messaging.ServiceType{messaging.UserService},
+		ToServices: []messaging.ServiceType{messaging.UserService, messaging.TripService},
 		Data: map[string]interface{}{
 			"id":       userID,
 			"email":    email,

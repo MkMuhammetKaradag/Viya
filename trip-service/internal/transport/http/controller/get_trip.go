@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"trip-service/internal/domain"
 	"trip-service/internal/transport/http/usecase"
 
@@ -27,12 +26,17 @@ func NewGetTripController(usecase usecase.GetTripUseCase) *GetTripController {
 }
 
 func (c *GetTripController) Handle(fbrCtx fiber.Ctx, req *GetTripRequest) (*GetTripResponse, error) {
-	userID := fbrCtx.Get("X-User-ID")
-	fmt.Println("userID:", userID)
-	// if userID == "" {
-	// 	return nil, fiber.ErrUnauthorized
-	// }
-	trip, err := c.usecase.Execute(fbrCtx.Context(), req.TripID)
+	rawUserID := fbrCtx.Get("X-User-ID")
+
+	var currentUserID uuid.UUID
+	if rawUserID != "" {
+		// Eğer giriş yapılmışsa UUID'ye çevirelim
+		parsedID, err := uuid.Parse(rawUserID)
+		if err == nil {
+			currentUserID = parsedID
+		}
+	}
+	trip, err := c.usecase.Execute(fbrCtx.Context(), req.TripID, currentUserID)
 	if err != nil {
 		return nil, err
 	}

@@ -39,6 +39,7 @@ func (p *TaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 
 	mux.HandleFunc(TaskUploadWaypointPhoto, p.ProcessWaypointUploadTask)
+	mux.HandleFunc(domain.TaskIncrementTripView, p.ProcessIncrementViewTask)
 
 	log.Println("Worker Processor başlatılıyor...")
 	return p.server.Run(mux)
@@ -84,8 +85,19 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 	log.Printf("Successfully processed photo for waypoint: %s", payload.WayPointID)
 	return nil
 }
+func (p *TaskProcessor) ProcessIncrementViewTask(ctx context.Context, t *asynq.Task) error {
+	var payload domain.IncrementTripViewPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		return err
+	}
 
-func (p *TaskProcessor) Stop() {
+	// Repository'deki o meşhur ON CONFLICT'li fonksiyonu burada çağırıyoruz
+	// Bu sayede DB işlemleri arka planda, kullanıcıyı bekletmeden hallolur.
+	return p.repo.IncrementUniqueView(ctx, payload.TripID, payload.UserID)
+}
+func (p *TaskProcessor) Close() error {
 	log.Println("Worker Processor durduruluyor...")
 	p.server.Shutdown()
+
+	return nil
 }

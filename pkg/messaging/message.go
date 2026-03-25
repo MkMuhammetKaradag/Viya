@@ -9,6 +9,7 @@ type ServiceType string
 const (
 	AuthService ServiceType = "auth"
 	UserService ServiceType = "user"
+	TripService ServiceType = "trip"
 )
 
 type MessageType string

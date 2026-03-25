@@ -1,0 +1,148 @@
+package database
+
+import (
+	"context"
+	"fmt"
+	"time"
+	"trip-service/internal/domain"
+
+	"github.com/google/uuid"
+)
+
+func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
+	query := `
+		SELECT 
+			t.id, t.user_id, t.title, t.description, t.cover_image_url, t.is_active, t.is_public, t.published_at, t.view_count, t.created_at,
+			w.id as wp_id, w.title as wp_title, w.description as wp_desc, w.order_index, w.latitude, w.longitude, w.note, w.created_at as wp_created_at,
+			p.id as photo_id, p.url as photo_url
+		FROM trips t
+		LEFT JOIN waypoints w ON t.id = w.trip_id
+		LEFT JOIN photos p ON w.id = p.waypoint_id
+		WHERE t.id = $1
+		ORDER BY w.order_index ASC, p.id ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, tripID)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var trip *domain.Trip
+	// Waypoint ve Photo'ları ID'lerine göre takip etmek için map kullanıyoruz (Duplicate önlemek için)
+	waypointMap := make(map[uuid.UUID]*domain.Waypoint)
+
+	for rows.Next() {
+		var (
+			// Trip alanları
+			tID, tUserID         uuid.UUID
+			tTitle, tDesc        string
+			tCover               *string
+			tIsActive, tIsPublic bool
+			tPublished, tCreated time.Time
+			tViewCount           int
+			// Waypoint alanları (Null gelebilir diye pointer veya Null types kullanmalısın)
+			wpID                    *uuid.UUID
+			wpTitle, wpDesc, wpNote *string
+			wpOrder                 *int
+			wpLat, wpLon            *float64
+			wpCreated               *time.Time
+			// Photo alanları
+			pID  *uuid.UUID
+			pURL *string
+		)
+
+		err := rows.Scan(
+			&tID, &tUserID, &tTitle, &tDesc, &tCover, &tIsActive, &tIsPublic, &tPublished, &tViewCount, &tCreated,
+			&wpID, &wpTitle, &wpDesc, &wpOrder, &wpLat, &wpLon, &wpNote, &wpCreated,
+			&pID, &pURL,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// 1. Trip nesnesini sadece ilk satırda oluştur
+		if trip == nil {
+			trip = &domain.Trip{
+				ID:            tID,
+				UserID:        tUserID,
+				Title:         tTitle,
+				Description:   tDesc,
+				CoverImageURL: tCover,
+				IsActive:      tIsActive,
+				IsPublic:      tIsPublic,
+				PublishedAt:   tPublished,
+				ViewCount:     tViewCount,
+				CreatedAt:     tCreated,
+				Waypoints:     []domain.Waypoint{},
+			}
+		}
+
+		// 2. Eğer Waypoint varsa işle (LEFT JOIN olduğu için nil gelebilir)
+		if wpID != nil {
+			wp, exists := waypointMap[*wpID]
+			if !exists {
+				wp = &domain.Waypoint{
+					ID:          *wpID,
+					TripID:      tID,
+					Title:       *wpTitle,
+					Description: *wpDesc,
+					OrderIndex:  *wpOrder,
+					Latitude:    *wpLat,
+					Longitude:   *wpLon,
+					Note:        *wpNote,
+					CreatedAt:   *wpCreated,
+					Photos:      []domain.Photo{},
+				}
+				waypointMap[*wpID] = wp
+				trip.Waypoints = append(trip.Waypoints, *wp)
+			}
+
+			// 3. Eğer Photo varsa bu Waypoint'in altına ekle
+			if pID != nil {
+				// Trip içindeki doğru waypoint'i bulup fotoğrafı ona eklemeliyiz
+				for i := range trip.Waypoints {
+					if trip.Waypoints[i].ID == *wpID {
+						// Aynı fotoğrafın tekrar eklenmediğinden emin ol (opsiyonel)
+						trip.Waypoints[i].Photos = append(trip.Waypoints[i].Photos, domain.Photo{
+							ID:         *pID,
+							WaypointID: *wpID,
+							URL:        *pURL,
+						})
+					}
+				}
+			}
+		}
+	}
+
+	if trip == nil {
+		return nil, fmt.Errorf("trip not found")
+	}
+
+	return trip, nil
+}
+func (r *Repository) IncrementUniqueView(ctx context.Context, tripID, userID uuid.UUID) error {
+	// Sorgu Mantığı:
+	// 1. trip_views tablosuna (trip_id, user_id) eklemeye çalış.
+	// 2. Eğer zaten varsa (ON CONFLICT) hiçbir şey yapma.
+	// 3. Eğer yeni bir satır eklendiyse (RETURNING), gidip trips tablosundaki sayacı artır.
+
+	query := `
+		WITH inserted_view AS (
+			INSERT INTO trip_views (trip_id, user_id)
+			VALUES ($1, $2)
+			ON CONFLICT (trip_id, user_id) DO NOTHING
+			RETURNING trip_id
+		)
+		UPDATE trips
+		SET view_count = view_count + 1
+		WHERE id IN (SELECT trip_id FROM inserted_view);
+	`
+
+	_, err := r.db.ExecContext(ctx, query, tripID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to increment unique view: %w", err)
+	}
+
+	return nil
+}

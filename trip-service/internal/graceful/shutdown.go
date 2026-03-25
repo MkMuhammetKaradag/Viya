@@ -7,28 +7,31 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"trip-service/infrastructure/worker"
-	"trip-service/internal/domain"
 
 	"github.com/gofiber/fiber/v3"
 )
 
-func WaitForShutdown(app *fiber.App, processor *worker.TaskProcessor, repo domain.TripRepository, timeout time.Duration) {
+type Releasable interface {
+	Close() error
+}
+
+func Shutdown(app *fiber.App, timeout time.Duration, resources ...Releasable) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	<-sigChan
-	fmt.Println("\n--- Shutdown signal received ---")
+	fmt.Println("--- 🛑 shutdowm signal recived ---")
 
-	// 1. Önce sunucuyu kapat (Yeni istek gelmesin)
 	if err := app.ShutdownWithTimeout(timeout); err != nil {
-		fmt.Printf("Fiber shutdown error: %v\n", err)
+		fmt.Printf(" fiber shutdowm error: %v", err)
 	}
 
-	// 2. Worker'ı durdur (Devam eden işler tamamlansın)
-
-	fmt.Println("Shutting down worker processor...")
-	processor.Stop()
-
-	fmt.Println("Server gracefully stopped. Goodbye! 👋")
+	for _, res := range resources {
+		if res != nil {
+			if err := res.Close(); err != nil {
+				fmt.Println("resorve close error :%v", err)
+			}
+		}
+	}
+	fmt.Println("✅server graccefully stopped. Goodbye!")
 }

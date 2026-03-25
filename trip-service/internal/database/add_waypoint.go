@@ -15,36 +15,44 @@ func (r *Repository) AddWaypoint(ctx context.Context, wp *domain.Waypoint) (uuid
 	}
 	defer tx.Rollback()
 
-	// 1. ADIM: Sıralamayı Belirle
-	// Eğer wp.OrderIndex 0 ise (gelmemişse), en sona ekle.
-	// Eğer 0'dan büyükse, araya yer aç (Shift).
+	// 1. Mevcut en yüksek index'i öğrenelim
+	var currentMax int
+	maxQuery := `SELECT COALESCE(MAX(order_index), 0) FROM waypoints WHERE trip_id = $1`
+	err = tx.QueryRowContext(ctx, maxQuery, wp.TripID).Scan(&currentMax)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("could not get max order: %w", err)
+	}
 
 	var finalOrderIndex int
 
+	// 2. MANTIK KONTROLÜ: Kullanıcının istediği index mantıklı mı?
+	// Eğer wp.OrderIndex 0'dan büyükse ve mevcut MAX+1'den çok daha büyükse,
+	// onu en sona (MAX+1) zorluyoruz (Boşluk oluşmasın diye).
 	if wp.OrderIndex > 0 {
-		// Araya ekleme: Mevcutları birer kaydır
-		shiftQuery := `
-            UPDATE waypoints 
-            SET order_index = order_index + 1 
-            WHERE trip_id = $1 AND order_index >= $2`
-		_, err = tx.ExecContext(ctx, shiftQuery, wp.TripID, wp.OrderIndex)
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("shifting failed: %w", err)
+		if wp.OrderIndex > currentMax+1 {
+			// Kullanıcı uçuk bir rakam gönderdi, biz onu "en son + 1" yapıyoruz.
+			finalOrderIndex = currentMax + 1
+		} else {
+			// Araya ekleme: Mevcutları birer kaydır (Shift)
+			shiftQuery := `
+                UPDATE waypoints 
+                SET order_index = order_index + 1 
+                WHERE trip_id = $1 AND order_index >= $2`
+			_, err = tx.ExecContext(ctx, shiftQuery, wp.TripID, wp.OrderIndex)
+			if err != nil {
+				return uuid.Nil, fmt.Errorf("shifting failed: %w", err)
+			}
+			finalOrderIndex = wp.OrderIndex
 		}
-		finalOrderIndex = wp.OrderIndex
 	} else {
-		// En sona ekleme: Mevcut MAX + 1 değerini hesapla
-		calcQuery := `SELECT COALESCE(MAX(order_index), 0) + 1 FROM waypoints WHERE trip_id = $1`
-		err = tx.QueryRowContext(ctx, calcQuery, wp.TripID).Scan(&finalOrderIndex)
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("calc order failed: %w", err)
-		}
+		// Kullanıcı 0 gönderdi veya hiç göndermedi: Doğrudan sona ekle
+		finalOrderIndex = currentMax + 1
 	}
 
-	// 2. ADIM: Kaydı Gerçekleştir
+	// 3. ADIM: Kaydı Gerçekleştir
 	insertQuery := `
-        INSERT INTO waypoints (trip_id, title, latitude, longitude, description, order_index,note) 
-        VALUES ($1, $2, $3, $4, $5, $6,$7) 
+        INSERT INTO waypoints (trip_id, title, latitude, longitude, description, order_index, note) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7) 
         RETURNING id`
 
 	var wpID uuid.UUID

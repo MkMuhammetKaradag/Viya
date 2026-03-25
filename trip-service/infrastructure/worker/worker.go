@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"trip-service/internal/domain"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
 
@@ -29,5 +30,18 @@ func (w *Worker) EnqueueUploadWaypointPhoto(payload domain.UploadWaypointPhotoTa
 	task := asynq.NewTask(TaskUploadWaypointPhoto, data, asynq.MaxRetry(5), asynq.Queue("critical"))
 
 	_, err = w.client.Enqueue(task)
+	return err
+}
+
+func (w *Worker) EnqueueIncrementTripView(tripID, userID uuid.UUID) error {
+	payload := domain.IncrementTripViewPayload{
+		TripID: tripID,
+		UserID: userID,
+	}
+	data, _ := json.Marshal(payload)
+
+	// Görüntülenme sayısı "critical" bir iş değil, "default" kuyruğuna atabiliriz.
+	task := asynq.NewTask(domain.TaskIncrementTripView, data, asynq.MaxRetry(3), asynq.Queue("default"))
+	_, err := w.client.Enqueue(task)
 	return err
 }
