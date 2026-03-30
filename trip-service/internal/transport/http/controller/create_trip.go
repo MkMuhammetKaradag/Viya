@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"time"
 	"trip-service/internal/domain"
 	"trip-service/internal/transport/http/usecase"
@@ -23,15 +24,24 @@ type CreateTripRequest struct {
 }
 
 type WaypointRequest struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	OrderIndex  int      `json:"order_index"`
-	Latitude    float64  `json:"latitude" validate:"required"`
-	Longitude   float64  `json:"longitude" validate:"required"`
-	Note        string   `json:"note"`
-	Photos      []string `json:"photos,omitempty"` // Cloudinary URL'leri
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	OrderIndex  int            `json:"order_index"`
+	Latitude    float64        `json:"latitude" validate:"required"`
+	Longitude   float64        `json:"longitude" validate:"required"`
+	Note        string         `json:"note"`
+	Photos      []PhotoRequest `json:"photos,omitempty"`
+}
+type PhotoRequest struct {
+	URL  string       `json:"url"`
+	Tags []TagRequest `json:"tags,omitempty"`
 }
 
+type TagRequest struct {
+	Label string  `json:"label"`
+	XPos  float64 `json:"x_pos"`
+	YPos  float64 `json:"y_pos"`
+}
 type CreateTripResponse struct {
 	Message string    `json:"message"`
 	TripID  uuid.UUID `json:"trip_id"`
@@ -49,15 +59,14 @@ func NewCreateTripController(usecase usecase.CreateTripUseCase) *CreateTripContr
 
 func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) (*CreateTripResponse, error) {
 
-	// fmt.Println("--- YENİ İSTEK GELDİ ---") // Bu satırı ekle
-
+	fmt.Println("--- YENİ İSTEK GELDİ ---", req) // Bu satırı ekle
 	// if req == nil {
-	// 	 fmt.Println("HATA: Request body boş!")
-	// 	return nil, fiber.ErrBadRequest
+	// 	fmt.Println("HATA: Request body boş!")
+	// 	return nil, fiber.NewError(fiber.StatusBadRequest, "Request body is required")
 	// }
 
 	userIDStr := fbrctx.Get("X-User-ID")
-	// fmt.Println("Gelen User ID:", userIDStr)
+	fmt.Println("Gelen User ID:", userIDStr)
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
@@ -90,10 +99,16 @@ func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) 
 			Longitude:   wr.Longitude,
 			Note:        wr.Note,
 		}
-		for _, photoURL := range wr.Photos {
-			waypoint.Photos = append(waypoint.Photos, domain.Photo{
-				URL: photoURL,
-			})
+		for _, pr := range wr.Photos {
+			photo := domain.Photo{URL: pr.URL}
+			for _, tr := range pr.Tags {
+				photo.Tags = append(photo.Tags, domain.Tag{
+					Label: tr.Label,
+					XPos:  tr.XPos,
+					YPos:  tr.YPos,
+				})
+			}
+			waypoint.Photos = append(waypoint.Photos, photo)
 		}
 		tripModel.Waypoints = append(tripModel.Waypoints, waypoint)
 	}

@@ -16,7 +16,8 @@ type UploadBannerController struct {
 }
 
 type UploadBannerResponse struct {
-	Message string `json:"message"`
+	Message   string `json:"message"`
+	BannerUrl string `json:"banner_url"`
 }
 
 func NewUploadBannerController(usecase usecase.UploadBannerUseCase) *UploadBannerController {
@@ -47,8 +48,9 @@ func (h *UploadBannerController) Handle(fbrctx fiber.Ctx, req *UploadBannerReque
 	}
 	defer file.Close()
 
-	if err := h.usecase.Execute(fbrctx.Context(), userID, file); err != nil {
+	url, err := h.usecase.Execute(fbrctx.Context(), userID, file)
+	if err != nil {
 		return nil, err
 	}
-	return &UploadBannerResponse{Message: "Avatar Banner successfully"}, nil
+	return &UploadBannerResponse{Message: "Avatar Banner successfully", BannerUrl: url}, nil
 }

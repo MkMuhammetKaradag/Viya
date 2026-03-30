@@ -45,6 +45,14 @@ const (
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
+	photoTagsTable = `CREATE TABLE IF NOT EXISTS photo_tags (
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		photo_id UUID REFERENCES photos(id) ON DELETE CASCADE,
+		label TEXT NOT NULL,
+		x_pos DOUBLE PRECISION NOT NULL,
+		y_pos DOUBLE PRECISION NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`
 	tripWiewsTable = `
 		CREATE TABLE  IF NOT EXISTS  trip_views (
 			trip_id UUID REFERENCES trips(id),

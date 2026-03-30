@@ -27,6 +27,15 @@ type Photo struct {
 	ID         uuid.UUID `json:"id" db:"id"`
 	WaypointID uuid.UUID `json:"waypoint_id" db:"waypoint_id"`
 	URL        string    `json:"url" db:"url"`
+	Tags       []Tag     `json:"tags,omitempty"`
+}
+
+type Tag struct {
+	ID      uuid.UUID `json:"id"`
+	PhotoID uuid.UUID `json:"photo_id"`
+	Label   string    `json:"label"` // Etiket metni
+	XPos    float64   `json:"x_pos"` // Resmin genişliğinin % kaçında?
+	YPos    float64   `json:"y_pos"` // Resmin yüksekliğinin % kaçında?
 }
 type Waypoint struct {
 	ID          uuid.UUID `json:"id" db:"id"`

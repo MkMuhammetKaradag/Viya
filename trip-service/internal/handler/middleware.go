@@ -41,7 +41,7 @@ func HandleWithFiber[R Request, Res Response](handler FiberHandler[R, Res]) fibe
 		var req R
 
 		if err := parseRequest(c, &req); err != nil {
-
+			fmt.Println("parse err ", err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 

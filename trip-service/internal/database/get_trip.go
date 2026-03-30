@@ -11,16 +11,18 @@ import (
 
 func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID uuid.UUID) (*domain.Trip, error) {
 	query := `
-		SELECT 
-			t.id, t.user_id, t.title, t.description, t.cover_image_url, t.is_active, t.is_public, t.published_at, t.view_count, t.created_at,
-			w.id as wp_id, w.title as wp_title, w.description as wp_desc, w.order_index, w.latitude, w.longitude, w.note, w.created_at as wp_created_at,
-			p.id as photo_id, p.url as photo_url
-		FROM trips t
-		LEFT JOIN waypoints w ON t.id = w.trip_id
-		LEFT JOIN photos p ON w.id = p.waypoint_id
-		WHERE t.id = $1
-		ORDER BY w.order_index ASC, p.id ASC
-	`
+    SELECT 
+        t.id, t.user_id, t.title, t.description, t.cover_image_url, t.is_active, t.is_public, t.published_at, t.view_count, t.created_at,
+        w.id as wp_id, w.title as wp_title, w.description as wp_desc, w.order_index, w.latitude, w.longitude, w.note, w.created_at as wp_created_at,
+        p.id as photo_id, p.url as photo_url,
+        pt.id as tag_id, pt.label as tag_label, pt.x_pos as tag_x, pt.y_pos as tag_y
+    FROM trips t
+    LEFT JOIN waypoints w ON t.id = w.trip_id
+    LEFT JOIN photos p ON w.id = p.waypoint_id
+    LEFT JOIN photo_tags pt ON p.id = pt.photo_id
+    WHERE t.id = $1
+    ORDER BY w.order_index ASC, p.id ASC, pt.id ASC
+`
 
 	rows, err := r.db.QueryContext(ctx, query, tripID)
 	if err != nil {
@@ -31,31 +33,35 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID u
 	var trip *domain.Trip
 	// Waypoint ve Photo'ları ID'lerine göre takip etmek için map kullanıyoruz (Duplicate önlemek için)
 	waypointMap := make(map[uuid.UUID]*domain.Waypoint)
+	photoMap := make(map[uuid.UUID]*domain.Photo)
 
 	for rows.Next() {
 		var (
 			// Trip alanları
-			tID, tUserID         uuid.UUID
-			tTitle, tDesc        string
-			tCover               *string
-			tIsActive, tIsPublic bool
-			tPublished, tCreated time.Time
-			tViewCount           int
-			// Waypoint alanları (Null gelebilir diye pointer veya Null types kullanmalısın)
+			tID, tUserID            uuid.UUID
+			tTitle, tDesc           string
+			tCover                  *string
+			tIsActive, tIsPublic    bool
+			tPublished, tCreated    time.Time
+			tViewCount              int
 			wpID                    *uuid.UUID
 			wpTitle, wpDesc, wpNote *string
 			wpOrder                 *int
 			wpLat, wpLon            *float64
 			wpCreated               *time.Time
-			// Photo alanları
-			pID  *uuid.UUID
-			pURL *string
+			pID                     *uuid.UUID
+			pURL                    *string
+			// 🆕 Etiket alanları
+			tagID      *uuid.UUID
+			tagLabel   *string
+			tagX, tagY *float64
 		)
 
 		err := rows.Scan(
 			&tID, &tUserID, &tTitle, &tDesc, &tCover, &tIsActive, &tIsPublic, &tPublished, &tViewCount, &tCreated,
 			&wpID, &wpTitle, &wpDesc, &wpOrder, &wpLat, &wpLon, &wpNote, &wpCreated,
 			&pID, &pURL,
+			&tagID, &tagLabel, &tagX, &tagY,
 		)
 		if err != nil {
 			return nil, err
@@ -64,51 +70,70 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID u
 		// 1. Trip nesnesini sadece ilk satırda oluştur
 		if trip == nil {
 			trip = &domain.Trip{
-				ID:            tID,
-				UserID:        tUserID,
-				Title:         tTitle,
-				Description:   tDesc,
-				CoverImageURL: tCover,
-				IsActive:      tIsActive,
-				IsPublic:      tIsPublic,
-				PublishedAt:   tPublished,
-				ViewCount:     tViewCount,
-				CreatedAt:     tCreated,
-				Waypoints:     []domain.Waypoint{},
+				ID: tID, UserID: tUserID, Title: tTitle, Description: tDesc,
+				CoverImageURL: tCover, IsActive: tIsActive, IsPublic: tIsPublic,
+				PublishedAt: tPublished, ViewCount: tViewCount, CreatedAt: tCreated,
+				Waypoints: []domain.Waypoint{},
 			}
 		}
 
 		// 2. Eğer Waypoint varsa işle (LEFT JOIN olduğu için nil gelebilir)
 		if wpID != nil {
-			wp, exists := waypointMap[*wpID]
-			if !exists {
-				wp = &domain.Waypoint{
-					ID:          *wpID,
-					TripID:      tID,
-					Title:       *wpTitle,
-					Description: *wpDesc,
-					OrderIndex:  *wpOrder,
-					Latitude:    *wpLat,
-					Longitude:   *wpLon,
-					Note:        *wpNote,
-					CreatedAt:   *wpCreated,
-					Photos:      []domain.Photo{},
+			if _, exists := waypointMap[*wpID]; !exists {
+				wp := &domain.Waypoint{
+					ID: *wpID, TripID: tID, Title: *wpTitle, Description: *wpDesc,
+					OrderIndex: *wpOrder, Latitude: *wpLat, Longitude: *wpLon,
+					Note: *wpNote, CreatedAt: *wpCreated,
+					Photos: []domain.Photo{},
 				}
 				waypointMap[*wpID] = wp
 				trip.Waypoints = append(trip.Waypoints, *wp)
 			}
 
-			// 3. Eğer Photo varsa bu Waypoint'in altına ekle
+			// 3. Photo İşleme
 			if pID != nil {
-				// Trip içindeki doğru waypoint'i bulup fotoğrafı ona eklemeliyiz
+				// Trip.Waypoints içindeki doğru waypoint'i referans alalım
+				var currentWp *domain.Waypoint
 				for i := range trip.Waypoints {
 					if trip.Waypoints[i].ID == *wpID {
-						// Aynı fotoğrafın tekrar eklenmediğinden emin ol (opsiyonel)
-						trip.Waypoints[i].Photos = append(trip.Waypoints[i].Photos, domain.Photo{
-							ID:         *pID,
-							WaypointID: *wpID,
-							URL:        *pURL,
-						})
+						currentWp = &trip.Waypoints[i]
+						break
+					}
+				}
+
+				if currentWp != nil {
+					photo, photoExists := photoMap[*pID]
+					if !photoExists {
+						photo = &domain.Photo{
+							ID: *pID, WaypointID: *wpID, URL: *pURL,
+							Tags: []domain.Tag{}, // 👈 Boş tag listesi ile başlat
+						}
+						photoMap[*pID] = photo
+						currentWp.Photos = append(currentWp.Photos, *photo)
+					}
+
+					// 4. Tag İşleme (Eğer varsa)
+					if tagID != nil {
+						// Mevcut fotoğrafın içine tag'i ekle
+						// Not: append yaparken pointer üzerinden gitmek için
+						// photoMap'teki nesneyi veya Waypoint içindeki nesneyi güncellemeliyiz
+						for j := range currentWp.Photos {
+							if currentWp.Photos[j].ID == *pID {
+								// Aynı tag'in tekrar eklenmesini önle
+								alreadyAdded := false
+								for _, existingTag := range currentWp.Photos[j].Tags {
+									if existingTag.ID == *tagID {
+										alreadyAdded = true
+										break
+									}
+								}
+								if !alreadyAdded {
+									currentWp.Photos[j].Tags = append(currentWp.Photos[j].Tags, domain.Tag{
+										ID: *tagID, Label: *tagLabel, XPos: *tagX, YPos: *tagY,
+									})
+								}
+							}
+						}
 					}
 				}
 			}

@@ -10,7 +10,7 @@ import (
 )
 
 type UploadBannerUseCase interface {
-	Execute(ctx context.Context, userID uuid.UUID, file multipart.File) error
+	Execute(ctx context.Context, userID uuid.UUID, file multipart.File) (string, error)
 }
 type uploadBannerUseCase struct {
 	cloudinaryService domain.CloudinaryService
@@ -24,16 +24,16 @@ func NewUploadBannerUseCase(userRepository domain.UserRepository, cldSvc domain.
 	}
 }
 
-func (uc *uploadBannerUseCase) Execute(ctx context.Context, userID uuid.UUID, file multipart.File) error {
+func (uc *uploadBannerUseCase) Execute(ctx context.Context, userID uuid.UUID, file multipart.File) (string, error) {
 	uploadRes, err := uc.cloudinaryService.UploadBanner(ctx, file, userID.String())
 
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = uc.userRepository.UpdateBanner(ctx, userID, uploadRes)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Println(uploadRes)
-	return nil
+	return uploadRes, nil
 }

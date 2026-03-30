@@ -16,7 +16,8 @@ type UploadAvatarController struct {
 }
 
 type UploadAvatarResponse struct {
-	Message string `json:"message"`
+	Message   string `json:"message"`
+	AvatarUrl string `json:"avatar_url"`
 }
 
 func NewUploadAvatarController(usecase usecase.UploadAvatarUseCase) *UploadAvatarController {
@@ -47,8 +48,9 @@ func (h *UploadAvatarController) Handle(fbrctx fiber.Ctx, req *UploadAvatarReque
 	}
 	defer file.Close()
 
-	if err := h.usecase.Execute(fbrctx.Context(), userID, file); err != nil {
+	url, err := h.usecase.Execute(fbrctx.Context(), userID, file)
+	if err != nil {
 		return nil, err
 	}
-	return &UploadAvatarResponse{Message: "Avatar uploaded successfully"}, nil
+	return &UploadAvatarResponse{Message: "Avatar uploaded successfully", AvatarUrl: url}, nil
 }

@@ -32,15 +32,13 @@ func (s *CloudinaryService) upload(ctx context.Context, reader io.Reader, opts d
 
 	// 2. Dinamik Transformation
 	if opts.Transformation == "" {
-		width := opts.Width
-		height := opts.Height
-		if width == 0 {
-			width = 800
+		// Eğer Width veya Height 0 gelirse, Cloudinary'e zorla boyut verme
+		if opts.Width > 0 && opts.Height > 0 {
+			opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", opts.Width, opts.Height)
+		} else {
+			// Boyut verilmemişse sadece kaliteyi optimize et, boyuta dokunma!
+			opts.Transformation = "q_auto,f_auto"
 		}
-		if height == 0 {
-			height = 600
-		}
-		opts.Transformation = fmt.Sprintf("c_fill,g_auto,w_%d,h_%d,q_auto,f_auto", width, height)
 	}
 
 	// 3. Yükleme

@@ -10,7 +10,7 @@ import (
 )
 
 type UploadAvatarUseCase interface {
-	Execute(ctx context.Context, userID uuid.UUID, file multipart.File) error
+	Execute(ctx context.Context, userID uuid.UUID, file multipart.File) (string, error)
 }
 type uploadAvatarUseCase struct {
 	cloudinaryService domain.CloudinaryService
@@ -24,16 +24,16 @@ func NewUploadAvatarUseCase(userRepository domain.UserRepository, cldSvc domain.
 	}
 }
 
-func (uc *uploadAvatarUseCase) Execute(ctx context.Context, userID uuid.UUID, file multipart.File) error {
+func (uc *uploadAvatarUseCase) Execute(ctx context.Context, userID uuid.UUID, file multipart.File) (string, error) {
 	uploadRes, err := uc.cloudinaryService.UploadAvatar(ctx, file, userID.String())
 
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = uc.userRepository.UpdateAvatar(ctx, userID, uploadRes)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Println(uploadRes)
-	return nil
+	return uploadRes, nil
 }
