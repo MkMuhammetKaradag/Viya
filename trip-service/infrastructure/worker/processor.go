@@ -51,14 +51,22 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 		return fmt.Errorf("json unmarshal failed: %w", err)
 	}
 
-	// 1. Dosyayı diskten oku
-	fileBytes, err := os.ReadFile(payload.FilePath)
-	if err != nil {
-		// Eğer dosya diskte yoksa retry etmenin anlamı yok (SkipRetry)
-		return fmt.Errorf("file not found at %s: %w", payload.FilePath, asynq.SkipRetry)
+	// 1. Etiketleri hemen çöz (Unmarshal)
+	var tags []domain.Tag
+	if payload.Tags != "" {
+		// React Native'den gelen string'i struct listesine çeviriyoruz
+		if err := json.Unmarshal([]byte(payload.Tags), &tags); err != nil {
+			return fmt.Errorf("tags unmarshal failed: %w", err)
+		}
 	}
 
-	// 2. Cloudinary'ye yükle
+	// 2. Dosyayı oku
+	fileBytes, err := os.ReadFile(payload.FilePath)
+	if err != nil {
+		return fmt.Errorf("file not found: %w", asynq.SkipRetry)
+	}
+
+	// 3. Cloudinary'ye yükle
 	url, err := p.cloudinarySvc.UploadImageFromBytes(ctx, fileBytes, domain.UploadOptions{
 		WayPointID: payload.WayPointID,
 		Folder:     "waypoint_photos",
@@ -67,22 +75,15 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 		return fmt.Errorf("cloudinary upload failed: %w", err)
 	}
 
-	// 3. DB'ye kaydet
-	wpID, err := uuid.Parse(payload.WayPointID)
-	if err != nil {
-		return fmt.Errorf("invalid uuid %s: %w", payload.WayPointID, asynq.SkipRetry)
-	}
-
-	if err := p.repo.AddWaypointPhotos(ctx, wpID, []string{url}); err != nil {
+	// 4. DB'ye kaydet (Yeni metodumuzla)
+	wpID, _ := uuid.Parse(payload.WayPointID)
+	// AddWaypointPhotos yerine AddWaypointPhotoWithTags kullanıyoruz
+	if err := p.repo.AddWaypointPhotoWithTags(ctx, wpID, url, tags); err != nil {
 		return fmt.Errorf("db persistence failed: %w", err)
 	}
 
-	// 4. İşlem başarıyla bittiğinde dosyayı temizle
-	if err := os.Remove(payload.FilePath); err != nil {
-		log.Printf("Warning: temporary file could not be removed: %v", err)
-	}
-
-	log.Printf("Successfully processed photo for waypoint: %s", payload.WayPointID)
+	// 5. Temizlik
+	os.Remove(payload.FilePath)
 	return nil
 }
 func (p *TaskProcessor) ProcessIncrementViewTask(ctx context.Context, t *asynq.Task) error {

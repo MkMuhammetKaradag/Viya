@@ -8,7 +8,8 @@ type Worker interface {
 
 type UploadWaypointPhotoTaskPayload struct {
 	WayPointID string `json:"waypoint_id"`
-	FilePath   string `json:"file_path"` // Diskteki geçici yol
+	FilePath   string `json:"file_path"`
+	Tags       string `json:"tags"` // JSON string olarak React Native'den gelen veri
 }
 
 const TaskIncrementTripView = "task:increment_trip_view"

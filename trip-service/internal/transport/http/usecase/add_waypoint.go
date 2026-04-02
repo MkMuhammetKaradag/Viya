@@ -14,7 +14,7 @@ import (
 )
 
 type AddWayPointUseCase interface {
-	Execute(ctx context.Context, wp *domain.Waypoint, files []*multipart.FileHeader) (uuid.UUID, error)
+	Execute(ctx context.Context, wp *domain.Waypoint, files []*multipart.FileHeader, tags []string) (uuid.UUID, error)
 }
 
 type addWayPointUseCase struct {
@@ -26,7 +26,7 @@ func NewAddWayPointUseCase(tripRepo domain.TripRepository, worker domain.Worker)
 	return &addWayPointUseCase{tripRepo: tripRepo, worker: worker}
 }
 
-func (uc *addWayPointUseCase) Execute(ctx context.Context, wp *domain.Waypoint, files []*multipart.FileHeader) (uuid.UUID, error) {
+func (uc *addWayPointUseCase) Execute(ctx context.Context, wp *domain.Waypoint, files []*multipart.FileHeader, tags []string) (uuid.UUID, error) {
 	// A. Önce Waypoint'i veritabanına ekle (ID almamız şart)
 	wpID, err := uc.tripRepo.AddWaypoint(ctx, wp)
 	if err != nil {
@@ -35,22 +35,29 @@ func (uc *addWayPointUseCase) Execute(ctx context.Context, wp *domain.Waypoint, 
 
 	// B. Eğer fotoğraf varsa, onları diske kaydet ve Worker'a haber ver
 	if len(files) > 0 {
-		for _, fileHeader := range files {
-			// Geçici dosya yolu oluştur
+		for i, fileHeader := range files {
 			currentFile := fileHeader
+
+			// Güvenlik: Eğer tag sayısı dosya sayısından azsa paniklememesi için kontrol
+			currentTags := ""
+			if i < len(tags) {
+				currentTags = tags[i]
+			}
+
 			tempFileName := fmt.Sprintf("%s_%d%s", wpID.String(), time.Now().UnixNano(), filepath.Ext(currentFile.Filename))
 			tempPath := filepath.Join("tmp/uploads", tempFileName)
 
-			// Dosyayı diske yaz (Senin yazdığın helper fonksiyon)
 			if err := saveFileToDisk(currentFile, tempPath); err != nil {
 				fmt.Printf("Warning: Failed to save temp file: %v\n", err)
-				continue // Bir dosya başarısızsa diğerlerine devam et
+				continue
 			}
+			fmt.Println("i:", i, " tags:", currentTags)
 
-			// Worker'a işi gönder
+			// PAYLOAD'A TAGLARI EKLE
 			payload := domain.UploadWaypointPhotoTaskPayload{
 				WayPointID: wpID.String(),
 				FilePath:   tempPath,
+				Tags:       currentTags, // İşte burası!
 			}
 
 			if err := uc.worker.EnqueueUploadWaypointPhoto(payload); err != nil {

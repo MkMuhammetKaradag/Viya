@@ -12,12 +12,6 @@ import (
 )
 
 type AddWayPointRequest struct {
-	// TripID     uuid.UUID `json:"trip_id"`
-	// Lat        float64   `json:"lat" validate:"required"`
-	// Lon        float64   `json:"lon" validate:"required"`
-	// Desc       string    `json:"desc,omitempty"`
-	// Title      string    `json:"title,omitempty"`
-	// OrderIndex int       `json:"order_index,omitempty"`
 }
 
 type AddWayPointResponse struct {
@@ -62,10 +56,15 @@ func (c *AddWayPointController) Handle(fiberCtx fiber.Ctx, req *AddWayPointReque
 	if err == nil { // Eğer dosya gönderilmişse form'dan alalım
 		files = form.File["images"]
 	}
-
+	var tags []string
+	for i := 0; i < len(files); i++ {
+		tagKey := fmt.Sprintf("tags_%d", i)
+		tags = append(tags, fiberCtx.FormValue(tagKey))
+	}
+	fmt.Println(tags)
 	// 3. UseCase'e hem modeli hem de dosyaları gönderiyoruz
 	// UseCase önce waypoint'i kaydedecek, sonra fotoğrafları worker'a atacak.
-	wpID, err := c.usecase.Execute(fiberCtx.Context(), wayPointModel, files)
+	wpID, err := c.usecase.Execute(fiberCtx.Context(), wayPointModel, files, tags)
 	if err != nil {
 		return nil, err
 	}
