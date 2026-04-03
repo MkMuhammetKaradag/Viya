@@ -93,9 +93,9 @@ func buildContainer(cfg *config.Config) (*container, error) {
 func getServerConfig(cfg *config.Config) server.Config {
 	return server.Config{
 		Port:         cfg.Server.Port,
-		IdleTimeout:  5 * time.Second,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 }
 func initStorage(cfg *config.Config) (domain.TripRepository, error) {
@@ -115,7 +115,7 @@ func initMessaging() (domain.RabbitMQClient, error) {
 }
 
 func (a *App) Start() error {
-	serverErr := make(chan error, 1)
+	// 1. RabbitMQ'yu başlat (Arka planda)
 	go func() {
 		log.Println("RabbitMQ Consumer başlatılıyor...")
 		if err := a.rabbit.ConsumeMessages(a.rabbitRouter.Route); err != nil {
@@ -123,14 +123,27 @@ func (a *App) Start() error {
 		}
 	}()
 
+	// 2. HTTP Server'ı başlat (Arka planda)
+	serverErr := make(chan error, 1)
 	go func() {
-		serverErr <- a.server.Start()
+		log.Printf("HTTP Server %s portunda başlatılıyor...", a.server.Address())
+		if err := a.server.Start(); err != nil {
+			serverErr <- err
+		}
 	}()
+
+	// 3. Graceful Shutdown (BLOKLAYICI OLMALI)
+	// Bu fonksiyon içeride os.Interrupt (SIGINT, SIGTERM) bekler.
+	// Ctrl+C gelene kadar BURADA BEKLER.
 	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.processor, a.repo)
+
+	// Ctrl+C gelince kod buraya düşer.
+	// Eğer server başlatılırken bir hata oluştuysa onu kontrol et, yoksa temizce çık.
 	select {
 	case err := <-serverErr:
 		return err
 	default:
+		log.Println("Uygulama başarıyla kapatıldı.")
 		return nil
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 type ReorderRequest struct {
 	WayPointID uuid.UUID `uri:"waypoint_id" validate:"required"`
-	Index      int       `json:"index" validate:"required" min:"1"`
+	Index *int `json:"index" validate:"required" min:"0"`
 }
 
 type ReorderResponse struct {
@@ -27,8 +27,8 @@ func NewReorderController(usecase usecase.ReorderUseCase) *ReorderController {
 }
 
 func (c *ReorderController) Handle(fiberCtx fiber.Ctx, req *ReorderRequest) (*ReorderResponse, error) {
-
-	err := c.usecase.Execute(fiberCtx, req.WayPointID, req.Index)
+	newIndex := *req.Index
+	err := c.usecase.Execute(fiberCtx, req.WayPointID, newIndex)
 	if err != nil {
 		return nil, err
 	}
