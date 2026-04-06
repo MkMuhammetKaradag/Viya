@@ -40,11 +40,11 @@ func NewApp(cfg *config.Config) (*App, error) {
 		server:       c.server,
 		rabbit:       c.rabbit,
 		rabbitRouter: c.rabbitRouter,
+		repo:         c.repo,
 	}, nil
 }
 
 type container struct {
-	tripRepo     domain.TripRepository
 	processor    *worker.TaskProcessor
 	server       *server.Server
 	repo         domain.TripRepository
@@ -82,7 +82,6 @@ func buildContainer(cfg *config.Config) (*container, error) {
 
 	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
 	return &container{
-		tripRepo:     repo,
 		processor:    processor,
 		server:       server.NewServer(getServerConfig(cfg), httpRouter),
 		repo:         repo,

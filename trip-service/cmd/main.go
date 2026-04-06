@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"trip-service/internal/app"
 	"trip-service/internal/config"
 )
@@ -9,7 +10,7 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		panic(fmt.Errorf("config load error: %w", err))
+		log.Fatalf("config load error: %v", err)
 	}
 	fmt.Println("config", cfg)
 	app, err := app.NewApp(cfg)

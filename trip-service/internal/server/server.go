@@ -27,7 +27,7 @@ func NewServer(cfg Config, registrar RouteRegistrar) *Server {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 		IdleTimeout:  cfg.IdleTimeout,
-		Concurrency:  256 * 1024,
+		// Concurrency:  256 * 1024,
 	})
 
 	app.Get("/health", func(c fiber.Ctx) error {
