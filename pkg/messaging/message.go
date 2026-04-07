@@ -7,9 +7,10 @@ import (
 type ServiceType string
 
 const (
-	AuthService ServiceType = "auth"
-	UserService ServiceType = "user"
-	TripService ServiceType = "trip"
+	AuthService   ServiceType = "auth"
+	UserService   ServiceType = "user"
+	TripService   ServiceType = "trip"
+	SocialService ServiceType = "social"
 )
 
 type MessageType string

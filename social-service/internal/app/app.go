@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"viya/pkg/messaging"
 
 	"social-service/internal/config"
 	"social-service/internal/database"
@@ -12,13 +13,15 @@ import (
 	"social-service/internal/graceful"
 	"social-service/internal/server"
 	httptransport "social-service/internal/transport/http"
+	"social-service/internal/transport/rabbitmq"
 )
 
 type App struct {
-	config *config.Config
-
-	server *server.Server
-	repo   domain.SocialRepository
+	config       *config.Config
+	rabbit       domain.RabbitMQClient
+	server       *server.Server
+	repo         domain.SocialRepository
+	rabbitRouter domain.RabbitRouter
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -27,15 +30,18 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, fmt.Errorf("bootstrap failed: %w", err)
 	}
 	return &App{config: cfg,
-		server: c.server,
-
-		repo: c.repo,
+		server:       c.server,
+		rabbit:       c.rabbit,
+		repo:         c.repo,
+		rabbitRouter: c.rabbitRouter,
 	}, nil
 }
 
 type container struct {
-	server *server.Server
-	repo   domain.SocialRepository
+	server       *server.Server
+	repo         domain.SocialRepository
+	rabbit       domain.RabbitMQClient
+	rabbitRouter domain.RabbitRouter
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
@@ -43,12 +49,18 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
-
+	rabbitClient, err := initMessaging()
+	if err != nil {
+		return nil, fmt.Errorf("init rabbit :%w", err)
+	}
 	httpRouter := setupHttpRouter(cfg, repo)
+	rbtRouter := rabbitmq.NewRabbitRouter(repo)
 	return &container{
 
-		server: server.NewServer(getServerConfig(cfg), httpRouter),
-		repo:   repo,
+		server:       server.NewServer(getServerConfig(cfg), httpRouter),
+		repo:         repo,
+		rabbit:       rabbitClient,
+		rabbitRouter: rbtRouter,
 	}, nil
 }
 func getServerConfig(cfg *config.Config) server.Config {
@@ -69,6 +81,13 @@ func initStorage(cfg *config.Config) (domain.SocialRepository, error) {
 }
 
 func (a *App) Start() error {
+
+	go func() {
+		log.Println("RabbitMQ Consumer başlatılıyor...")
+		if err := a.rabbit.ConsumeMessages(a.rabbitRouter.Route); err != nil {
+			log.Printf("Consumer hatası: %v", err)
+		}
+	}()
 
 	// 2. HTTP Server'ı başlat (Arka planda)
 	serverErr := make(chan error, 1)
@@ -98,4 +117,10 @@ func setupHttpRouter(cfg *config.Config, r domain.SocialRepository) server.Route
 
 	httpHandlers := httptransport.NewHandlers(r)
 	return httptransport.NewRouter(httpHandlers)
+}
+func initMessaging() (domain.RabbitMQClient, error) {
+	rabbitCfg := messaging.NewDefaultConfig("")
+	// Servis adını ve diğer ayarları ver
+	return messaging.NewRabbitClient(rabbitCfg, messaging.SocialService)
+
 }
