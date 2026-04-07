@@ -61,7 +61,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		return nil, fmt.Errorf("init rabbit :%w", err)
 	}
 
-	httpRouter := setupHttpRouter(cfg, repo, cldSvc)
+	httpRouter := setupHttpRouter(cfg, repo, cldSvc, rabbitClient)
 
 	return &container{
 		userRepo: repo,
@@ -92,8 +92,8 @@ func initMessaging() (domain.RabbitMQClient, error) {
 	return messaging.NewRabbitClient(rabbitCfg, messaging.UserService)
 
 }
-func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService) server.RouterRegister {
-	handler := httptransport.NewHandlers(userRepo, cloudinaryService)
+func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService, rabbitClient domain.RabbitMQClient) server.RouterRegister {
+	handler := httptransport.NewHandlers(userRepo, cloudinaryService, rabbitClient)
 	return httptransport.NewRouter(handler)
 }
 
@@ -110,21 +110,26 @@ func getServerConfig(cfg *config.Config) server.ServerConfig {
 }
 
 func (a *App) Start() error {
-	serverErr := make(chan error, 1)
+
 	go func() {
 		log.Println("RabbitMQ Consumer başlatılıyor...")
 		if err := a.rabbit.ConsumeMessages(a.rabbitRouter.Route); err != nil {
 			log.Printf("Consumer hatası: %v", err)
 		}
 	}()
+	serverErr := make(chan error, 1)
 	go func() {
-		serverErr <- a.server.Start()
+		log.Printf("HTTP Server %s portunda başlatılıyor...", a.server.Address())
+		if err := a.server.Start(); err != nil {
+			serverErr <- err
+		}
 	}()
-	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.userRepo)
+	graceful.Shutdown(a.server.FiberApp(), 5*time.Second, a.userRepo, a.rabbit)
 	select {
 	case err := <-serverErr:
 		return err
 	default:
+		log.Println("Uygulama başarıyla kapatıldı.")
 		return nil
 	}
 }

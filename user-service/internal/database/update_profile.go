@@ -19,6 +19,7 @@ func (r *Repository) UpdateProfile(ctx context.Context, userID uuid.UUID, params
 		"bio":        params.Bio,
 		"location":   params.Location,
 		"website":    params.Website,
+		"is_private": params.IsPrivate,
 	}
 
 	// Preferences özel bir işlem (JSON) gerektirdiği için onu ayrı tutabiliriz veya

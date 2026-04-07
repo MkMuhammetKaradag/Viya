@@ -14,6 +14,7 @@ type UpdateProfileRequest struct {
 	Bio         *string  `json:"bio"`
 	Location    *string  `json:"location"`
 	Website     *string  `json:"website"`
+	ISPrivate   *bool    `json:"is_private"`
 	Preferences []string `json:"preferences"`
 }
 
@@ -43,6 +44,7 @@ func (h *UpdateProfileController) Handle(fbrctx fiber.Ctx, req *UpdateProfileReq
 		Bio:         req.Bio,
 		Location:    req.Location,
 		Website:     req.Website,
+		IsPrivate:   req.ISPrivate,
 		Preferences: req.Preferences,
 	}
 	if err := h.usecase.Execute(fbrctx.Context(), userID, parans); err != nil {

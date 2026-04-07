@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"mime/multipart"
 	"user-service/internal/domain"
+	"viya/pkg/messaging"
 
 	"github.com/google/uuid"
 )
@@ -15,12 +16,14 @@ type UploadAvatarUseCase interface {
 type uploadAvatarUseCase struct {
 	cloudinaryService domain.CloudinaryService
 	userRepository    domain.UserRepository
+	rabbitClient      domain.RabbitMQClient
 }
 
-func NewUploadAvatarUseCase(userRepository domain.UserRepository, cldSvc domain.CloudinaryService) UploadAvatarUseCase {
+func NewUploadAvatarUseCase(userRepository domain.UserRepository, cldSvc domain.CloudinaryService, rabbitClient domain.RabbitMQClient) UploadAvatarUseCase {
 	return &uploadAvatarUseCase{
 		cloudinaryService: cldSvc,
 		userRepository:    userRepository,
+		rabbitClient:      rabbitClient,
 	}
 }
 
@@ -34,6 +37,25 @@ func (uc *uploadAvatarUseCase) Execute(ctx context.Context, userID uuid.UUID, fi
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(uploadRes)
+
+	updatedMessage := messaging.Message{
+		Type: messaging.UserTypes.UpdatedUser,
+		ToServices: []messaging.ServiceType{
+			messaging.SocialService,
+			// messaging.TripService,
+		},
+		Data: map[string]interface{}{
+			"id":         userID,
+			"avatar_url": uploadRes,
+		},
+		Critical: true,
+	}
+
+	// 3. RabbitMQ üzerinden yayınla
+	err = uc.rabbitClient.PublishMessage(ctx, updatedMessage)
+	if err != nil {
+		log.Printf("User update message could not be sent: %v", err)
+	}
+
 	return uploadRes, nil
 }

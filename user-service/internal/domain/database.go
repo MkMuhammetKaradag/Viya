@@ -12,6 +12,7 @@ type UpdateProfileParams struct {
 	Bio         *string
 	Location    *string
 	Website     *string
+	IsPrivate   *bool
 	Preferences []string
 }
 type UserRepository interface {

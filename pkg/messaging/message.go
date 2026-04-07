@@ -21,6 +21,12 @@ var AuthTypes = struct {
 
 	CreatedUser: "created_user",
 }
+var UserTypes = struct {
+	UpdatedUser MessageType
+}{
+
+	UpdatedUser: "updated_user",
+}
 
 type Message struct {
 	ID          string        `json:"id"`           // Unique message ID

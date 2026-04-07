@@ -11,7 +11,7 @@ import (
 
 func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, username, first_name, last_name, bio, location, website, preferences, avatar_url,banner_url, created_at 
+		SELECT id, email, username, first_name, last_name, bio, location, website, preferences, avatar_url,banner_url,is_private created_at 
 		FROM users 
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -20,7 +20,7 @@ func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain
 
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
 		&user.ID, &user.Email, &user.Username, &user.FirstName, &user.LastName,
-		&user.Bio, &user.Location, &user.Website, &prefsJSON, &user.AvatarURL, &user.BannerURL, &user.CreatedAt,
+		&user.Bio, &user.Location, &user.Website, &prefsJSON, &user.AvatarURL, &user.BannerURL, &user.IsPrivate, &user.CreatedAt,
 	)
 
 	if err != nil {

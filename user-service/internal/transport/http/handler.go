@@ -17,12 +17,12 @@ type UserHandlers struct {
 	GetMe         *controller.GetMeController
 }
 
-func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService) *Handler {
+func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService, rabbitClient domain.RabbitMQClient) *Handler {
 	return &Handler{
 		User: &UserHandlers{
-			UploadAvatar:  controller.NewUploadAvatarController(usecase.NewUploadAvatarUseCase(userRepo, cloudinaryService)),
+			UploadAvatar:  controller.NewUploadAvatarController(usecase.NewUploadAvatarUseCase(userRepo, cloudinaryService, rabbitClient)),
 			UploadBanner:  controller.NewUploadBannerController(usecase.NewUploadBannerUseCase(userRepo, cloudinaryService)),
-			UpdateProfile: controller.NewUpdateProfileController(usecase.NewUpdateProfileUseCase(userRepo)),
+			UpdateProfile: controller.NewUpdateProfileController(usecase.NewUpdateProfileUseCase(userRepo, rabbitClient)),
 			GetMe:         controller.NewGetMeController(usecase.NewGetMeUseCase(userRepo)),
 		},
 	}

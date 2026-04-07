@@ -15,6 +15,7 @@ const (
 		website TEXT,
 		preferences JSONB DEFAULT '[]',
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
+		is_private BOOLEAN NOT NULL DEFAULT FALSE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         deleted_at TIMESTAMPTZ -- Soft delete desteği için
