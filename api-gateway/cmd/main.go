@@ -16,6 +16,7 @@ func main() {
 	application.RegisterService("waypoints-service", []string{"http://localhost:8081"}, "/api/v1/waypoints")
 	application.RegisterService("auth-service", []string{"http://localhost:8082"}, "/api/v1/auth")
 	application.RegisterService("user-service", []string{"http://localhost:8083"}, "/api/v1/users")
+	application.RegisterService("social-service", []string{"http://localhost:8084"}, "/api/v1/social")
 	// application.RegisterService("auth-service", []string{"http://localhost:8082"}, "/api/v1")
 
 	if err := application.Start(); err != nil {

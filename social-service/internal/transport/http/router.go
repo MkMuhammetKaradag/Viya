@@ -1,6 +1,9 @@
 package http
 
 import (
+	"social-service/internal/handler"
+	"social-service/internal/transport/http/controller"
+
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -14,13 +17,14 @@ func NewRouter(handlers *Handlers) *Router {
 
 func (r *Router) Register(app *fiber.App) {
 
+	h := r.handlers
+
 	api := app.Group("/api/v1")
+
 	// social Endpoints
-	api.Post("/social", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "active",
-			"service": "trip-service",
-		})
-	})
+	social := api.Group("/social")
+	{
+		social.Post("/follow/:target_user_id", handler.HandleWithFiber[controller.FollowUserRequest, controller.FollowUserResponse](h.Social.FollowUser))
+	}
 
 }

@@ -1,10 +1,25 @@
 package http
 
-import "social-service/internal/domain"
+import (
+	"social-service/internal/domain"
+	"social-service/internal/transport/http/controller"
+	"social-service/internal/transport/http/usecase"
+)
 
 type Handlers struct {
+	Social *socialHandlers
+}
+
+type socialHandlers struct {
+	FollowUser *controller.FollowUserController
 }
 
 func NewHandlers(repo domain.SocialRepository) *Handlers {
-	return &Handlers{}
+	socialHandlers := &socialHandlers{
+		FollowUser: controller.NewFollowUserController(usecase.NewFollowUserUseCase(repo)),
+	}
+
+	return &Handlers{
+		Social: socialHandlers,
+	}
 }

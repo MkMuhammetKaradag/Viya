@@ -64,6 +64,8 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		"/api/v1/users/upload-banner",
 		"/api/v1/users/update-profile",
 		"/api/v1/users/me",
+
+		"/api/v1/social/follow",
 	}
 	f.Use(middleware.AuthMiddleware(protectedPrefixes, sessionManager))
 
