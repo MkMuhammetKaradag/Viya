@@ -12,6 +12,7 @@ type SocialRepository interface {
 
 	CreateFollow(ctx context.Context, followerID, followingID uuid.UUID) (string, error)
 	UpdateFollowStatus(ctx context.Context, followerID, followingID uuid.UUID, newStatus string) error
+	GetPendingFollowRequests(ctx context.Context, userID uuid.UUID) ([]PendingRequest, error)
 
 	BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID) error
 	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) ([]uuid.UUID, error)
