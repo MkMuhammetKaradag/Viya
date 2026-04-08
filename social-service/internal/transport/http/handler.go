@@ -11,14 +11,16 @@ type Handlers struct {
 }
 
 type socialHandlers struct {
-	FollowUser *controller.FollowUserController
-	BlockUser  *controller.BlockUserController
+	FollowUser    *controller.FollowUserController
+	FollowRequest *controller.FollowRequestController
+	BlockUser     *controller.BlockUserController
 }
 
 func NewHandlers(repo domain.SocialRepository) *Handlers {
 	socialHandlers := &socialHandlers{
-		FollowUser: controller.NewFollowUserController(usecase.NewFollowUserUseCase(repo)),
-		BlockUser:  controller.NewBlockUserController(usecase.NewBlockUserUseCase(repo)),
+		FollowUser:    controller.NewFollowUserController(usecase.NewFollowUserUseCase(repo)),
+		BlockUser:     controller.NewBlockUserController(usecase.NewBlockUserUseCase(repo)),
+		FollowRequest: controller.NewFollowRequestController(usecase.NewFollowRequestUseCase(repo)),
 	}
 
 	return &Handlers{

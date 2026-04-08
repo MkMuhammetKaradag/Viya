@@ -25,6 +25,7 @@ func (r *Router) Register(app *fiber.App) {
 	social := api.Group("/social")
 	{
 		social.Post("/follow/:target_user_id", handler.HandleWithFiber[controller.FollowUserRequest, controller.FollowUserResponse](h.Social.FollowUser))
+		social.Post("/follow-request/:follower_id", handler.HandleWithFiber[controller.FollowRequestRequest, controller.FollowRequestResponse](h.Social.FollowRequest))
 		social.Post("/block/:target_user_id", handler.HandleWithFiber[controller.BlockUserRequest, controller.BlockUserResponse](h.Social.BlockUser))
 	}
 
