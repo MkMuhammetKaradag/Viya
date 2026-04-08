@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) CreatwFollow(ctx context.Context, followerID, followingID uuid.UUID) (string, error) {
+func (r *Repository) CreateFollow(ctx context.Context, followerID, followingID uuid.UUID) (string, error) {
 	var isPrivate bool
 
 	// hedef kullanıcının gizli olup olmadığını kontrol et
