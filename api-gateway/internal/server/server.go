@@ -69,6 +69,7 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		"/api/v1/social/unfollow",
 		"/api/v1/social/remove-follower",
 		"/api/v1/social/block",
+		"/api/v1/social/unblock",
 		"/api/v1/social/follow-request",
 		"/api/v1/social/pending-requests",
 	}

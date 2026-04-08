@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -53,4 +54,23 @@ func (r *Repository) IsBlocked(ctx context.Context, userA, userB uuid.UUID) ([]u
 		blockerIDs = append(blockerIDs, id)
 	}
 	return blockerIDs, nil
+}
+func (r *Repository) UnblockUser(ctx context.Context, myID, targetUserID uuid.UUID) error {
+	query := `
+        DELETE FROM blocks 
+        WHERE blocker_id = $1 AND blocked_id = $2
+    `
+	// myID: Engeli kaldıran (Sen)
+	// targetUserID: Engeli kaldırılan kişi
+	result, err := r.db.ExecContext(ctx, query, myID, targetUserID)
+	if err != nil {
+		return err
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("No active blocks were found for this user.")
+	}
+
+	return nil
 }

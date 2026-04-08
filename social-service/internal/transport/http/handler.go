@@ -18,6 +18,7 @@ type socialHandlers struct {
 
 	PendingRequests *controller.PendingRequestsController
 	BlockUser       *controller.BlockUserController
+	UnblockUser     *controller.UnblockUserController
 }
 
 func NewHandlers(repo domain.SocialRepository) *Handlers {
@@ -26,6 +27,7 @@ func NewHandlers(repo domain.SocialRepository) *Handlers {
 		UnFollowUser:    controller.NewUnFollowUserController(usecase.NewUnFollowUserUseCase(repo)),
 		RemoveFollower:  controller.NewRemoveFollowerController(usecase.NewRemoveFollowerUseCase(repo)),
 		BlockUser:       controller.NewBlockUserController(usecase.NewBlockUserUseCase(repo)),
+		UnblockUser:     controller.NewUnblockUserController(usecase.NewUnblockUserUseCase(repo)),
 		FollowRequest:   controller.NewFollowRequestController(usecase.NewFollowRequestUseCase(repo)),
 		PendingRequests: controller.NewPendingRequestsController(usecase.NewPendingRequestsUseCase(repo)),
 	}

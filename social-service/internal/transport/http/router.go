@@ -30,6 +30,7 @@ func (r *Router) Register(app *fiber.App) {
 		social.Post("/follow-request/:follower_id", handler.HandleWithFiber[controller.FollowRequestRequest, controller.FollowRequestResponse](h.Social.FollowRequest))
 		social.Get("/pending-requests", handler.HandleWithFiber[controller.PendingRequestsRequest, controller.PendingRequestsResponse](h.Social.PendingRequests))
 		social.Post("/block/:target_user_id", handler.HandleWithFiber[controller.BlockUserRequest, controller.BlockUserResponse](h.Social.BlockUser))
+		social.Delete("/unblock/:target_user_id", handler.HandleWithFiber[controller.UnblockUserRequest, controller.UnblockUserResponse](h.Social.UnblockUser))
 	}
 
 }

@@ -18,6 +18,7 @@ type SocialRepository interface {
 
 	BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID) error
 	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) ([]uuid.UUID, error)
+	UnblockUser(ctx context.Context, myID, targetUserID uuid.UUID) error
 
 	Close() error
 }
