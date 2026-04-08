@@ -25,6 +25,8 @@ func (r *Router) Register(app *fiber.App) {
 	social := api.Group("/social")
 	{
 		social.Post("/follow/:target_user_id", handler.HandleWithFiber[controller.FollowUserRequest, controller.FollowUserResponse](h.Social.FollowUser))
+		social.Post("/unfollow/:target_user_id", handler.HandleWithFiber[controller.UnFollowUserRequest, controller.UnFollowUserResponse](h.Social.UnFollowUser))
+		social.Delete("/remove-follower/:follower_id", handler.HandleWithFiber[controller.RemoveFollowerRequest, controller.RemoveFollowerResponse](h.Social.RemoveFollower))
 		social.Post("/follow-request/:follower_id", handler.HandleWithFiber[controller.FollowRequestRequest, controller.FollowRequestResponse](h.Social.FollowRequest))
 		social.Get("/pending-requests", handler.HandleWithFiber[controller.PendingRequestsRequest, controller.PendingRequestsResponse](h.Social.PendingRequests))
 		social.Post("/block/:target_user_id", handler.HandleWithFiber[controller.BlockUserRequest, controller.BlockUserResponse](h.Social.BlockUser))

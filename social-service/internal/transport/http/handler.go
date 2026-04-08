@@ -11,17 +11,22 @@ type Handlers struct {
 }
 
 type socialHandlers struct {
-	FollowUser    *controller.FollowUserController
-	FollowRequest *controller.FollowRequestController
+	FollowUser     *controller.FollowUserController
+	UnFollowUser   *controller.UnFollowUserController
+	RemoveFollower *controller.RemoveFollowerController
+	FollowRequest  *controller.FollowRequestController
+
 	PendingRequests *controller.PendingRequestsController
-	BlockUser     *controller.BlockUserController
+	BlockUser       *controller.BlockUserController
 }
 
 func NewHandlers(repo domain.SocialRepository) *Handlers {
 	socialHandlers := &socialHandlers{
-		FollowUser:    controller.NewFollowUserController(usecase.NewFollowUserUseCase(repo)),
-		BlockUser:     controller.NewBlockUserController(usecase.NewBlockUserUseCase(repo)),
-		FollowRequest: controller.NewFollowRequestController(usecase.NewFollowRequestUseCase(repo)),
+		FollowUser:      controller.NewFollowUserController(usecase.NewFollowUserUseCase(repo)),
+		UnFollowUser:    controller.NewUnFollowUserController(usecase.NewUnFollowUserUseCase(repo)),
+		RemoveFollower:  controller.NewRemoveFollowerController(usecase.NewRemoveFollowerUseCase(repo)),
+		BlockUser:       controller.NewBlockUserController(usecase.NewBlockUserUseCase(repo)),
+		FollowRequest:   controller.NewFollowRequestController(usecase.NewFollowRequestUseCase(repo)),
 		PendingRequests: controller.NewPendingRequestsController(usecase.NewPendingRequestsUseCase(repo)),
 	}
 
