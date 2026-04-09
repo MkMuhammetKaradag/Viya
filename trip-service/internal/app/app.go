@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"trip-service/infrastructure/ai"
 	"trip-service/infrastructure/img"
 	"trip-service/infrastructure/worker"
 	"trip-service/internal/config"
@@ -57,6 +58,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
+	aiService := ai.NewOllamaService()
 	imgSvc, err := img.NewCloudinaryService(cfg.Cloudinary.CloudName, cfg.Cloudinary.APIKey, cfg.Cloudinary.APISecret)
 	if err != nil {
 		return nil, err
@@ -72,7 +74,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	asynqClient := asynq.NewClient(redisOpt)
 	wrk := worker.NewWorker(asynqClient)
 
-	processor := worker.NewTaskProcessor(redisOpt, repo, imgSvc)
+	processor := worker.NewTaskProcessor(redisOpt, repo, imgSvc, aiService)
 	go func() {
 		log.Println("Starting Task Processor on Redis DB 2...")
 		if err := processor.Start(); err != nil {
@@ -80,7 +82,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		}
 	}()
 
-	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk)
+	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk, aiService)
 	return &container{
 		processor:    processor,
 		server:       server.NewServer(getServerConfig(cfg), httpRouter),
@@ -146,7 +148,7 @@ func (a *App) Start() error {
 		return nil
 	}
 }
-func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker) server.RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker,a domain.AIService) server.RouteRegistrar {
 
 	httpHandlers := httptransport.NewHandlers(r, i, w)
 	return httptransport.NewRouter(httpHandlers)

@@ -23,6 +23,12 @@ func newPostgresDB(cfg *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("connection failed: %w", err)
 	}
 
+	// _, err = db.Exec("CREATE EXTENSION IF NOT EXISTS vector")
+	// if err != nil {
+	// 	// Eğer burada hata alıyorsan veritabanı motoru vektörü DESTEKLEMİYORDUR.
+	// 	return nil, fmt.Errorf("vektör eklentisi kurulamadı: %w", err)
+	// }
+
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("ping failed: %w", err)
 	}

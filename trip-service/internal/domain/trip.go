@@ -21,7 +21,11 @@ type Trip struct {
 	CreatedAt     time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
 
-	Waypoints []Waypoint `json:"waypoints,omitempty"`
+	Waypoints   []Waypoint  `json:"waypoints,omitempty"`
+	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
+
+	CategoryNames []string `json:"category_names,omitempty"` // AI için isimleri burada tutacağız
+	LocationName  *string  `json:"location_name,omitempty" db:"location_name"`
 }
 type Photo struct {
 	ID         uuid.UUID `json:"id" db:"id"`
@@ -49,6 +53,8 @@ type Waypoint struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 
 	Photos []Photo `json:"photos,omitempty"`
+
+	CategoryID *uuid.UUID `json:"category_id,omitempty" db:"category_id"`
 }
 type TripSummary struct {
 	ID            uuid.UUID `json:"id"`

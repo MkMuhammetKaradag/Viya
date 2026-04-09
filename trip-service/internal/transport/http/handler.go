@@ -30,8 +30,8 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
-			Create:       controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo)),
-			Get:          controller.NewGetTripController(usecase.NewGetTripUseCase(repo)),
+			Create:       controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
+			Get:          controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
 			GetUserTrips: controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"trip-service/internal/domain"
 
 	"os"
@@ -18,9 +19,10 @@ type TaskProcessor struct {
 	server        *asynq.Server
 	repo          domain.TripRepository
 	cloudinarySvc domain.ImageService
+	ai            domain.AIService
 }
 
-func NewTaskProcessor(redisOpt asynq.RedisClientOpt, repo domain.TripRepository, cloudinarySvc domain.ImageService) *TaskProcessor {
+func NewTaskProcessor(redisOpt asynq.RedisClientOpt, repo domain.TripRepository, cloudinarySvc domain.ImageService, ai domain.AIService) *TaskProcessor {
 	server := asynq.NewServer(redisOpt, asynq.Config{
 		Concurrency: 5,
 		Queues: map[string]int{
@@ -33,6 +35,7 @@ func NewTaskProcessor(redisOpt asynq.RedisClientOpt, repo domain.TripRepository,
 		server:        server,
 		repo:          repo,
 		cloudinarySvc: cloudinarySvc,
+		ai:            ai,
 	}
 }
 func (p *TaskProcessor) Start() error {
@@ -40,6 +43,7 @@ func (p *TaskProcessor) Start() error {
 
 	mux.HandleFunc(TaskUploadWaypointPhoto, p.ProcessWaypointUploadTask)
 	mux.HandleFunc(domain.TaskIncrementTripView, p.ProcessIncrementViewTask)
+	mux.HandleFunc(domain.TaskGenerateTripEmbedding, p.ProcessTripEmbeddingTask)
 
 	log.Println("Worker Processor başlatılıyor...")
 	return p.server.Run(mux)
@@ -92,9 +96,79 @@ func (p *TaskProcessor) ProcessIncrementViewTask(ctx context.Context, t *asynq.T
 		return err
 	}
 
-	// Repository'deki o meşhur ON CONFLICT'li fonksiyonu burada çağırıyoruz
-	// Bu sayede DB işlemleri arka planda, kullanıcıyı bekletmeden hallolur.
-	return p.repo.IncrementUniqueView(ctx, payload.TripID, payload.UserID)
+	// 1. Mevcut İşlem: Görüntülenme sayısını artır
+	if err := p.repo.IncrementUniqueView(ctx, payload.TripID, payload.UserID); err != nil {
+		fmt.Println("sdsdsdsdsd")
+		return fmt.Errorf("increment view failed: %w", err)
+	}
+
+	// 2. YENİ İŞLEM: Kullanıcının ilgi vektörünü güncelle (Ağırlık: 0.05)
+	// Bu sayede kullanıcı baktıkça zevki yavaşça şekillenir.
+	if err := p.repo.UpdateUserInterest(ctx, payload.UserID, payload.TripID, 0.05); err != nil {
+		// AI güncellemesi kritik değilse sadece logla, görevi tamamen iptal etme
+		fmt.Printf("User interest update failed: %v\n", err)
+	}
+
+	return nil
+}
+func (p *TaskProcessor) ProcessTripEmbeddingTask(ctx context.Context, t *asynq.Task) error {
+
+	var payload domain.TripEmbeddingPayload
+	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+		return err
+	}
+	fmt.Println("procese geldi ")
+	// 1. Trip detaylarını DB'den çek (Prompt için gerekli tüm bilgilerle)
+	trip, err := p.repo.GetTripByIDForAI(ctx, payload.TripID)
+	if err != nil {
+		return fmt.Errorf("trip not found for embedding: %w", err)
+	}
+	fmt.Println("procese geldi 1")
+
+	// 2. Senin o meşhur "Zengin Prompt"u hazırla
+	prompt := buildRichPrompt(trip)
+	fmt.Println("procese geldi 2", prompt)
+
+	// 3. Ollama'ya git ve vektörü al
+	vector, err := p.ai.GetVector(ctx, prompt)
+	if err != nil {
+		return fmt.Errorf("ollama vector failed: %w", err)
+	}
+	fmt.Println("procese geldi 3")
+
+	// 4. DB'deki content_vector kolonunu güncelle
+	return p.repo.UpdateTripEmbedding(ctx, payload.TripID, vector)
+}
+
+func buildRichPrompt(trip *domain.Trip) string {
+	// 1. Temel Bilgiler
+	prompt := fmt.Sprintf("Travel Trip: %s. Description: %s. ", trip.Title, trip.Description)
+
+	// 2. Kategori Bilgisi (Çok önemli!)
+	// Not: Buraya category_id yerine category_name (isim) gelmeli.
+	// Eğer sadece ID varsa, DB'den isimleri join ile çekip buraya eklemelisin.
+	if len(trip.CategoryNames) > 0 {
+		prompt += "Categories: " + strings.Join(trip.CategoryNames, ", ") + ". "
+	}
+
+	// 3. Duraklar ve Yerel Bilgiler (Waypoint Context)
+	if len(trip.Waypoints) > 0 {
+		prompt += "Route details: "
+		for _, wp := range trip.Waypoints {
+			// Durak ismi ve oradaki aktiviteyi ekle
+			prompt += fmt.Sprintf("Stopped at %s. Activities: %s. ", wp.Title, wp.Description)
+			if wp.Note != "" {
+				prompt += fmt.Sprintf("Note: %s. ", wp.Note)
+			}
+		}
+	}
+
+	// 4. Konum Bilgisi
+	if trip.LocationName != nil {
+		prompt += fmt.Sprintf("Location: %s.", trip.LocationName)
+	}
+
+	return prompt
 }
 func (p *TaskProcessor) Close() error {
 	log.Println("Worker Processor durduruluyor...")

@@ -45,3 +45,11 @@ func (w *Worker) EnqueueIncrementTripView(tripID, userID uuid.UUID) error {
 	_, err := w.client.Enqueue(task)
 	return err
 }
+func (w *Worker) EnqueueTripEmbedding(tripID uuid.UUID) error {
+	payload := domain.TripEmbeddingPayload{TripID: tripID}
+	data, _ := json.Marshal(payload)
+
+	task := asynq.NewTask(domain.TaskGenerateTripEmbedding, data, asynq.MaxRetry(10))
+	_, err := w.client.Enqueue(task)
+	return err
+}

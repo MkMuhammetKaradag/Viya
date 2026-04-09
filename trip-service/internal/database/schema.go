@@ -1,6 +1,21 @@
 package database
 
 const (
+	createTripColon = `
+        ALTER TABLE trips 
+		ADD COLUMN IF NOT EXISTS content_vector vector(768), 
+		
+		ADD COLUMN IF NOT EXISTS location_name VARCHAR(255),
+		ADD COLUMN IF NOT EXISTS total_likes INTEGER DEFAULT 0,
+		ADD COLUMN IF NOT EXISTS total_comments INTEGER DEFAULT 0;
+		ALTER TABLE waypoints
+		ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id) ON DELETE SET NULL;
+		ALTER TABLE users
+		ADD COLUMN IF NOT EXISTS interest_vector vector(768);
+    `
+	createExtension = `
+        CREATE EXTENSION IF NOT EXISTS vector
+    `
 	tripsTable = `CREATE TABLE IF NOT EXISTS trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL, -- JWT'den gelecek
@@ -26,6 +41,30 @@ const (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 )`
 
+	categoriesTable = `CREATE TABLE IF NOT EXISTS categories (
+    -- UUID Standartı
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- Üst kategori (Self-referencing)
+    parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+    
+    -- İçerik
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    icon_url TEXT,
+    description TEXT,
+    
+    -- AI/Vektör Altyapısı
+    category_vector vector(768), 
+    
+    -- Zamanlama
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+)`
+	tripCategoriesTable = `CREATE TABLE IF NOT EXISTS trip_categories (
+    trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (trip_id, category_id)
+)`
 	waypointsTable = `CREATE TABLE IF NOT EXISTS waypoints (
 		id UUID PRIMARY  KEY DEFAULT gen_random_uuid(),
 		title VARCHAR(255) NOT NULL,

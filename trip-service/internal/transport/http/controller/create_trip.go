@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"time"
 	"trip-service/internal/domain"
 	"trip-service/internal/transport/http/usecase"
@@ -20,7 +19,8 @@ type CreateTripRequest struct {
 	PublishedAt   *time.Time `json:"published_at,omitempty"`
 	IsActive      bool       `json:"is_active"`
 	// İşte can alıcı nokta: Waypoint listesi opsiyonel (hibrit)
-	Waypoints []WaypointRequest `json:"waypoints,omitempty"`
+	Waypoints   []WaypointRequest `json:"waypoints,omitempty"`
+	CategoryIDs []uuid.UUID       `json:"category_ids,omitempty"`
 }
 
 type WaypointRequest struct {
@@ -31,6 +31,7 @@ type WaypointRequest struct {
 	Longitude   float64        `json:"longitude" validate:"required"`
 	Note        string         `json:"note"`
 	Photos      []PhotoRequest `json:"photos,omitempty"`
+	CategoryID  *uuid.UUID     `json:"category_id,omitempty"`
 }
 type PhotoRequest struct {
 	URL  string       `json:"url"`
@@ -59,19 +60,12 @@ func NewCreateTripController(usecase usecase.CreateTripUseCase) *CreateTripContr
 
 func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) (*CreateTripResponse, error) {
 
-	fmt.Println("--- YENİ İSTEK GELDİ ---", req) // Bu satırı ekle
-	// if req == nil {
-	// 	fmt.Println("HATA: Request body boş!")
-	// 	return nil, fiber.NewError(fiber.StatusBadRequest, "Request body is required")
-	// }
-
 	userIDStr := fbrctx.Get("X-User-ID")
-	fmt.Println("Gelen User ID:", userIDStr)
-
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid or missing user id")
 	}
+
 	// 1. Request verisini Domain modeline dönüştürelim
 	tripModel := &domain.Trip{
 		UserID:        userID,
@@ -80,25 +74,30 @@ func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) 
 		CoverImageURL: req.CoverImageURL,
 		IsPublic:      req.IsPublic,
 		IsActive:      req.IsActive,
+
+		CategoryIDs: req.CategoryIDs,
 	}
 
-	// PublishedAt boşsa şu anı set et
 	if req.PublishedAt != nil {
 		tripModel.PublishedAt = *req.PublishedAt
 	} else {
 		tripModel.PublishedAt = time.Now()
 	}
 
-	// 2. Eğer Waypoints varsa onları da domain modeline ekleyelim
+	// 2. Waypoints Döngüsü
 	for _, wr := range req.Waypoints {
 		waypoint := domain.Waypoint{
 			Title:       wr.Title,
 			Description: wr.Description,
-			OrderIndex:  wr.OrderIndex,
-			Latitude:    wr.Latitude,
-			Longitude:   wr.Longitude,
-			Note:        wr.Note,
+
+			CategoryID: wr.CategoryID,
+			OrderIndex: wr.OrderIndex,
+			Latitude:   wr.Latitude,
+			Longitude:  wr.Longitude,
+			Note:       wr.Note,
 		}
+
+		// Fotoğraflar ve Etiketler
 		for _, pr := range wr.Photos {
 			photo := domain.Photo{URL: pr.URL}
 			for _, tr := range pr.Tags {
@@ -113,7 +112,7 @@ func (c *CreateTripController) Handle(fbrctx fiber.Ctx, req *CreateTripRequest) 
 		tripModel.Waypoints = append(tripModel.Waypoints, waypoint)
 	}
 
-	// 3. UseCase'i çalıştır (Repository'deki Transaction'ı bu tetikleyecek)
+	// 3. UseCase'i çalıştır
 	id, err := c.usecase.Execute(fbrctx.Context(), tripModel)
 	if err != nil {
 		return nil, err

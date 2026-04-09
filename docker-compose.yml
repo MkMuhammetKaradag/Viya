@@ -26,7 +26,16 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - '5672:5672' 
-      - '15672:15672' 
+      - '5672:5672'
+      - '15672:15672'
+  ollama:
+    image: ollama/ollama:latest
+    container_name: viya-ollama
+    restart: always
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
 volumes:
   postgres_data:
+  ollama_data:
