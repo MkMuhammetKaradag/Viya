@@ -30,5 +30,6 @@ func (uc *createTripUseCase) Execute(ctx context.Context, trip *domain.Trip) (uu
 	if err := uc.worker.EnqueueTripEmbedding(id); err != nil {
 		fmt.Printf("Warning: Could not enqueue task: %v\n", err)
 	}
+
 	return id, nil
 }

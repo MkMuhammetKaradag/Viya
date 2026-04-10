@@ -38,5 +38,9 @@ func (r *Router) Register(app *fiber.App) {
 		waypoints.Patch("/:waypoint_id/reorder", handler.HandleWithFiber[controller.ReorderRequest, controller.ReorderResponse](h.WayPoint.Reorder))
 		waypoints.Put("/:waypoint_id", handler.HandleWithFiber[controller.UpdateWaypointRequest, controller.UpdateWaypointResponse](h.WayPoint.Update))
 	}
+	categories := api.Group("/categories")
+	{
+		categories.Get("/search", handler.HandleWithFiber[controller.SearchCategoriesRequest, controller.SearchCategoriesResponse](h.Category.Search))
+	}
 
 }

@@ -34,6 +34,15 @@ type Photo struct {
 	Tags       []Tag     `json:"tags,omitempty"`
 }
 
+type Category struct {
+	ID          uuid.UUID  `json:"id" db:"id"`
+	ParentID    *uuid.UUID `json:"parent_id,omitempty" db:"parent_id"`
+	Name        string     `json:"name" db:"name"`
+	Slug        string     `json:"slug" db:"slug"`
+	IconURL     *string    `json:"icon_url,omitempty" db:"icon_url"`
+	Description *string    `json:"description,omitempty" db:"description"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+}
 type Tag struct {
 	ID      uuid.UUID `json:"id"`
 	PhotoID uuid.UUID `json:"photo_id"`

@@ -9,12 +9,16 @@ import (
 type Handlers struct {
 	Trip     *tripHandlers
 	WayPoint *waypointHandlers
+	Category *categoryHandlers
 }
 
 type tripHandlers struct {
 	Create       *controller.CreateTripController
 	Get          *controller.GetTripController
 	GetUserTrips *controller.GetUserTripsController
+}
+type categoryHandlers struct {
+	Search *controller.SearchCategoriesController
 }
 
 type waypointHandlers struct {
@@ -40,6 +44,9 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Delete:  controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
 			Reorder: controller.NewReorderController(usecase.NewReorderUseCase(repo)),
 			Update:  controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
+		},
+		Category: &categoryHandlers{
+			Search: controller.NewSearchCategoriesController(usecase.NewSearchCategoriesUseCase(repo)),
 		},
 	}
 }
