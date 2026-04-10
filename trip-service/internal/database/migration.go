@@ -18,6 +18,27 @@ func runMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to create catogories table: %w", err)
 
 	}
+
+	// 	createFuncSQL := `
+	// CREATE OR REPLACE FUNCTION public.immutable_unaccent(text)
+	//   RETURNS text AS
+	// $func$
+	//   SELECT public.unaccent('public.unaccent', $1)
+	// $func$  LANGUAGE sql IMMUTABLE;`
+
+	// 	_, err := db.Exec(createFuncSQL)
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to create immutable_unaccent function: %w", err)
+	// 	}
+	// 	createCategoryIndex := `
+	//     CREATE INDEX IF NOT EXISTS idx_categories_name_trgm ON categories
+	//     USING gin (public.immutable_unaccent(name) gin_trgm_ops);
+	// `
+	// 	_, err = db.Exec(createCategoryIndex)
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to create trip_category index: %w", err)
+	// 	}
+
 	if _, err := db.Exec(tripCategoriesTable); err != nil {
 		return fmt.Errorf("failed to create tripCategory table : %w", err)
 	}

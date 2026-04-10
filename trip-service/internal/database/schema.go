@@ -14,8 +14,14 @@ const (
 		ADD COLUMN IF NOT EXISTS interest_vector vector(768);
     `
 	createExtension = `
-        CREATE EXTENSION IF NOT EXISTS vector
+        CREATE EXTENSION IF NOT EXISTS vector;
+		CREATE EXTENSION IF NOT EXISTS pg_trgm;
+		CREATE EXTENSION IF NOT EXISTS unaccent;
     `
+	creatCategoryIndex = `
+    CREATE INDEX IF NOT EXISTS idx_categories_name_trgm ON categories 
+    USING gin (public.immutable_unaccent(name) gin_trgm_ops);
+`
 	tripsTable = `CREATE TABLE IF NOT EXISTS trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL, -- JWT'den gelecek
