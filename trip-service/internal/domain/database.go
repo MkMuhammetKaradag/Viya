@@ -25,6 +25,7 @@ type TripRepository interface {
 	UpdateWaypoint(ctx context.Context, wp *Waypoint) error
 
 	CreateUser(ctx context.Context, id uuid.UUID, username, email string) error
+	UpdateUserSocialInfo(ctx context.Context, id uuid.UUID, isPrivate *bool, avatarURL *string) error
 
 	GetTripByIDForAI(ctx context.Context, id uuid.UUID) (*Trip, error)
 	UpdateTripEmbedding(ctx context.Context, id uuid.UUID, vector []float32) error

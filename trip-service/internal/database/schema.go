@@ -11,8 +11,10 @@ const (
 		ALTER TABLE waypoints
 		ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id) ON DELETE SET NULL;
 		ALTER TABLE users
-		ADD COLUMN IF NOT EXISTS interest_vector vector(768);
-    `
+		ADD COLUMN IF NOT EXISTS interest_vector vector(768),
+		ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;
+		
+		`
 	createExtension = `
         CREATE EXTENSION IF NOT EXISTS vector;
 		CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -112,6 +114,7 @@ const (
 		username VARCHAR(50) NOT NULL,
 		email VARCHAR(100),
 		avatar_url TEXT,
+		is_private BOOLEAN DEFAULT FALSE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)
 	`

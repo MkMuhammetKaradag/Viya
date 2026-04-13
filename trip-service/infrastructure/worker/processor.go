@@ -117,24 +117,23 @@ func (p *TaskProcessor) ProcessTripEmbeddingTask(ctx context.Context, t *asynq.T
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return err
 	}
-	fmt.Println("procese geldi ")
+	
 	// 1. Trip detaylarını DB'den çek (Prompt için gerekli tüm bilgilerle)
 	trip, err := p.repo.GetTripByIDForAI(ctx, payload.TripID)
 	if err != nil {
 		return fmt.Errorf("trip not found for embedding: %w", err)
 	}
-	fmt.Println("procese geldi 1")
+	
 
 	// 2. Senin o meşhur "Zengin Prompt"u hazırla
 	prompt := buildRichPrompt(trip)
-	fmt.Println("procese geldi 2", prompt)
+	
 
 	// 3. Ollama'ya git ve vektörü al
 	vector, err := p.ai.GetVector(ctx, prompt)
 	if err != nil {
 		return fmt.Errorf("ollama vector failed: %w", err)
 	}
-	fmt.Println("procese geldi 3")
 
 	// 4. DB'deki content_vector kolonunu güncelle
 	return p.repo.UpdateTripEmbedding(ctx, payload.TripID, vector)

@@ -42,7 +42,7 @@ func (uc *uploadAvatarUseCase) Execute(ctx context.Context, userID uuid.UUID, fi
 		Type: messaging.UserTypes.UpdatedUser,
 		ToServices: []messaging.ServiceType{
 			messaging.SocialService,
-			// messaging.TripService,
+			messaging.TripService,
 		},
 		Data: map[string]interface{}{
 			"id":         userID,
