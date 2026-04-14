@@ -60,6 +60,12 @@ func runMigrations(db *sql.DB) error {
 	if _, err := db.Exec(photoTagsTable); err != nil {
 		return fmt.Errorf("failed to create photo_tags table: %w", err)
 	}
+	if _, err := db.Exec(localFollowaTable); err != nil {
+		return fmt.Errorf("failed to create  local_follows  table: %w", err)
+	}
+	if _, err := db.Exec(localBlocksTable); err != nil {
+		return fmt.Errorf("failed to create local_blocks table: %w", err)
+	}
 
 	log.Println("Database migrated")
 	return nil

@@ -12,11 +12,12 @@ type UnblockUserUseCase interface {
 }
 
 type unblockUserUseCase struct {
-	repo domain.SocialRepository
+	repo         domain.SocialRepository
+	rabbitClient domain.RabbitMQClient
 }
 
-func NewUnblockUserUseCase(repo domain.SocialRepository) UnblockUserUseCase {
-	return &unblockUserUseCase{repo: repo}
+func NewUnblockUserUseCase(repo domain.SocialRepository, rabbitClient domain.RabbitMQClient) UnblockUserUseCase {
+	return &unblockUserUseCase{repo: repo, rabbitClient: rabbitClient}
 }
 
 func (uc *unblockUserUseCase) Execute(ctx context.Context, myID, targetUserID uuid.UUID) error {

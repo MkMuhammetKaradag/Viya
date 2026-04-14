@@ -53,7 +53,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init rabbit :%w", err)
 	}
-	httpRouter := setupHttpRouter(cfg, repo)
+	httpRouter := setupHttpRouter(cfg, repo, rabbitClient)
 	rbtRouter := rabbitmq.NewRabbitRouter(repo)
 	return &container{
 
@@ -113,9 +113,9 @@ func (a *App) Start() error {
 		return nil
 	}
 }
-func setupHttpRouter(cfg *config.Config, r domain.SocialRepository) server.RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.SocialRepository, rb domain.RabbitMQClient) server.RouteRegistrar {
 
-	httpHandlers := httptransport.NewHandlers(r)
+	httpHandlers := httptransport.NewHandlers(r, rb)
 	return httptransport.NewRouter(httpHandlers)
 }
 func initMessaging() (domain.RabbitMQClient, error) {

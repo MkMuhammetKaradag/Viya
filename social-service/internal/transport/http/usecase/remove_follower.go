@@ -13,11 +13,12 @@ type RemoveFollowerUseCase interface {
 }
 
 type removeFollowerUseCase struct {
-	repo domain.SocialRepository
+	repo         domain.SocialRepository
+	rabbitClient domain.RabbitMQClient
 }
 
-func NewRemoveFollowerUseCase(repo domain.SocialRepository) RemoveFollowerUseCase {
-	return &removeFollowerUseCase{repo: repo}
+func NewRemoveFollowerUseCase(repo domain.SocialRepository, rabbitClient domain.RabbitMQClient) RemoveFollowerUseCase {
+	return &removeFollowerUseCase{repo: repo, rabbitClient: rabbitClient}
 }
 
 func (uc *removeFollowerUseCase) Execute(ctx context.Context, myID, followerID uuid.UUID) error {

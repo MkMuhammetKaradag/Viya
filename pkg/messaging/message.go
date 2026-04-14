@@ -27,6 +27,14 @@ var UserTypes = struct {
 
 	UpdatedUser: "updated_user",
 }
+var SocialTypes = struct {
+	FollowUser MessageType
+	BlockUser  MessageType
+}{
+
+	FollowUser: "follow_user",
+	BlockUser:  "block_user",
+}
 
 type Message struct {
 	ID          string        `json:"id"`           // Unique message ID

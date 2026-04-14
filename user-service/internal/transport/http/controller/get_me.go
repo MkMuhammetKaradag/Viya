@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"user-service/internal/domain"
 	"user-service/internal/transport/http/usecase"
 
@@ -26,6 +27,8 @@ func NewGetMeController(usecase usecase.GetMeUseCase) *GetMeController {
 }
 
 func (h *GetMeController) Handle(fbrctx fiber.Ctx, req *GetMeRequest) (*GetMeResponse, error) {
+	fmt.Println("geldi:")
+
 	userIDStr := fbrctx.Get("X-User-ID")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {

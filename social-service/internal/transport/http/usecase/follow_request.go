@@ -14,10 +14,11 @@ type FollowRequestUseCase interface {
 
 type followRequestUseCase struct {
 	repo domain.SocialRepository
+	rabbitClient domain.RabbitMQClient
 }
 
-func NewFollowRequestUseCase(repo domain.SocialRepository) FollowRequestUseCase {
-	return &followRequestUseCase{repo: repo}
+func NewFollowRequestUseCase(repo domain.SocialRepository, rabbitClient domain.RabbitMQClient) FollowRequestUseCase {
+	return &followRequestUseCase{repo: repo, rabbitClient: rabbitClient}
 }
 
 func (uc *followRequestUseCase) Execute(ctx context.Context, myID, followerID uuid.UUID, action string) error {

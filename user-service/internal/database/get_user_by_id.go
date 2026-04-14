@@ -11,7 +11,7 @@ import (
 
 func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, username, first_name, last_name, bio, location, website, preferences, avatar_url,banner_url,is_private created_at 
+		SELECT id, email, username, first_name, last_name, bio, location, website, preferences, avatar_url,banner_url,is_private,created_at 
 		FROM users 
 		WHERE id = $1 AND deleted_at IS NULL
 	`

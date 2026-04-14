@@ -10,6 +10,7 @@ import (
 type Handlers struct {
 	UserCreated domain.MessageHandler
 	UserUpdated domain.MessageHandler
+	FollowUser  domain.MessageHandler
 }
 
 func NewMessageHandlers(repo domain.TripRepository) *Handlers {
@@ -21,6 +22,9 @@ func NewMessageHandlers(repo domain.TripRepository) *Handlers {
 		UserUpdated: controller.NewUserUpdatedHandler(
 			usecase.NewUserUpdateddUseCase(repo),
 		),
+		FollowUser: controller.NewFollowUserHandler(
+			usecase.NewFollowUserUseCase(repo),
+		),
 	}
 }
 
@@ -28,7 +32,8 @@ func SetupMessageHandlers(repo domain.TripRepository) map[messaging.MessageType]
 	h := NewMessageHandlers(repo)
 
 	return map[messaging.MessageType]domain.MessageHandler{
-		messaging.AuthTypes.CreatedUser: h.UserCreated,
-		messaging.UserTypes.UpdatedUser: h.UserUpdated,
+		messaging.AuthTypes.CreatedUser:  h.UserCreated,
+		messaging.UserTypes.UpdatedUser:  h.UserUpdated,
+		messaging.SocialTypes.FollowUser: h.FollowUser,
 	}
 }

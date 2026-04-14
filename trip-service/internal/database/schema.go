@@ -124,4 +124,19 @@ const (
 		VALUES ($1, $2) 
 		ON CONFLICT (trip_id, user_id) DO NOTHING;
 	`
+
+	localFollowaTable = `
+	CREATE TABLE IF NOT EXISTS local_follows (
+    follower_id UUID,
+    following_id UUID,
+    status VARCHAR(20),
+    PRIMARY KEY (follower_id, following_id)
+);
+	`
+	localBlocksTable = `
+	CREATE TABLE IF NOT EXISTS local_blocks (
+		blocker_id UUID,
+		blocked_id UUID,
+		PRIMARY KEY (blocker_id, blocked_id)
+	)`
 )

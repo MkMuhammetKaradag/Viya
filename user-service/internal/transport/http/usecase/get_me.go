@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"user-service/internal/domain"
 
 	"github.com/google/uuid"
@@ -21,7 +22,7 @@ func NewGetMeUseCase(userRepository domain.UserRepository) GetMeUseCase {
 }
 
 func (uc *getMeUseCase) Execute(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
-
+	fmt.Println("userid:", userID)
 	user, err := uc.userRepository.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err

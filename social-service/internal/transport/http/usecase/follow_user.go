@@ -3,7 +3,9 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"social-service/internal/domain"
+	"viya/pkg/messaging"
 
 	"github.com/google/uuid"
 )
@@ -13,11 +15,12 @@ type FollowUserUseCase interface {
 }
 
 type followUserUseCase struct {
-	repo domain.SocialRepository
+	repo         domain.SocialRepository
+	rabbitClient domain.RabbitMQClient
 }
 
-func NewFollowUserUseCase(repo domain.SocialRepository) FollowUserUseCase {
-	return &followUserUseCase{repo: repo}
+func NewFollowUserUseCase(repo domain.SocialRepository, rabbitClient domain.RabbitMQClient) FollowUserUseCase {
+	return &followUserUseCase{repo: repo, rabbitClient: rabbitClient}
 }
 
 func (uc *followUserUseCase) Execute(ctx context.Context, followerID, targetUserID uuid.UUID) (string, error) {
@@ -46,5 +49,23 @@ func (uc *followUserUseCase) Execute(ctx context.Context, followerID, targetUser
 	}
 
 	status, err := uc.repo.CreateFollow(ctx, followerID, targetUserID)
+	updatedMessage := messaging.Message{
+		Type: messaging.SocialTypes.FollowUser,
+		ToServices: []messaging.ServiceType{
+			messaging.TripService,
+		},
+		Data: map[string]interface{}{
+			"follower":  followerID,
+			"following": targetUserID,
+			"status":    status,
+		},
+		Critical: true,
+	}
+
+	// 3. RabbitMQ üzerinden yayınla
+	err = uc.rabbitClient.PublishMessage(ctx, updatedMessage)
+	if err != nil {
+		log.Printf("User update message could not be sent: %v", err)
+	}
 	return status, err
 }

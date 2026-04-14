@@ -31,5 +31,7 @@ type TripRepository interface {
 	UpdateTripEmbedding(ctx context.Context, id uuid.UUID, vector []float32) error
 	UpdateUserInterest(ctx context.Context, userID uuid.UUID, tripID uuid.UUID, weight float32) error
 
+	UpsertLocalFollow(ctx context.Context, followerID, followingID uuid.UUID, status string) error
+
 	Close() error
 }

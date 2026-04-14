@@ -13,11 +13,12 @@ type UnFollowUserUseCase interface {
 }
 
 type UnfollowUserUseCase struct {
-	repo domain.SocialRepository
+	repo         domain.SocialRepository
+	rabbitClient domain.RabbitMQClient
 }
 
-func NewUnFollowUserUseCase(repo domain.SocialRepository) UnFollowUserUseCase {
-	return &UnfollowUserUseCase{repo: repo}
+func NewUnFollowUserUseCase(repo domain.SocialRepository, rabbitClient domain.RabbitMQClient) UnFollowUserUseCase {
+	return &UnfollowUserUseCase{repo: repo, rabbitClient: rabbitClient}
 }
 
 func (uc *UnfollowUserUseCase) Execute(ctx context.Context, followerID, targetUserID uuid.UUID) error {
