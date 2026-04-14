@@ -2,7 +2,9 @@ package usecase
 
 import (
 	"context"
+	"log"
 	"social-service/internal/domain"
+	"viya/pkg/messaging"
 
 	"github.com/google/uuid"
 )
@@ -22,5 +24,26 @@ func NewBlockUserUseCase(repo domain.SocialRepository, rabbitClient domain.Rabbi
 
 func (uc *blockUserUseCase) Execute(ctx context.Context, BlockerID, targetUserID uuid.UUID) error {
 	err := uc.repo.BlockUser(ctx, BlockerID, targetUserID)
-	return err
+	if err != nil {
+		return err
+	}
+
+	updatedMessage := messaging.Message{
+		Type: messaging.SocialTypes.BlockUser,
+		ToServices: []messaging.ServiceType{
+			messaging.TripService,
+		},
+		Data: map[string]interface{}{
+			"blocker": BlockerID,
+			"blocked": targetUserID,
+		},
+		Critical: true,
+	}
+
+	err = uc.rabbitClient.PublishMessage(ctx, updatedMessage)
+	if err != nil {
+		log.Printf("User update message could not be sent: %v", err)
+	}
+	return nil
+
 }

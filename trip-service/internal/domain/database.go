@@ -33,5 +33,7 @@ type TripRepository interface {
 
 	UpsertLocalFollow(ctx context.Context, followerID, followingID uuid.UUID, status string) error
 
+	UpsertLocalBlock(ctx context.Context, blockerID, blockedID uuid.UUID) error
+
 	Close() error
 }
