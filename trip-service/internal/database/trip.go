@@ -64,3 +64,69 @@ func (r *Repository) UpdateTripEmbedding(ctx context.Context, id uuid.UUID, vect
 	_, err := r.db.ExecContext(ctx, query, strVector, id)
 	return err
 }
+func (r *Repository) GetExploreTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.TripExploreDTO, error) {
+	query := `
+	WITH user_context AS (
+		SELECT interest_vector FROM users WHERE id = $1
+	)
+	SELECT 
+		t.id, t.user_id, t.title, t.cover_image_url, t.total_likes, t.total_comments, t.view_count, t.published_at,
+		u.username as owner_username,
+		u.avatar_url as owner_avatar,
+		-- 📍 Toplam waypoint sayısını alt sorgu ile alıyoruz
+		(SELECT COUNT(*) FROM waypoints WHERE trip_id = t.id) as waypoint_count,
+		-- 📸 Eğer kapak fotoğrafı yoksa, ilk waypoint'in ilk fotoğrafını getir
+		COALESCE(t.cover_image_url, (
+			SELECT p.url FROM photos p 
+			JOIN waypoints w ON p.waypoint_id = w.id 
+			WHERE w.trip_id = t.id 
+			ORDER BY w.order_index ASC, p.created_at ASC 
+			LIMIT 1
+		)) as display_image,
+		-- 🧠 Keşfet Puanı
+		COALESCE(
+			(
+				((1 - (t.content_vector <=> (SELECT interest_vector FROM user_context))) * 5.0) +
+				(LOG(t.total_likes + 1) * 0.8 + LOG(t.total_comments + 1) * 1.2 + LOG(t.view_count + 1) * 0.3) +
+				(exp(-0.01 * EXTRACT(DAY FROM (now() - t.published_at))))
+			), 
+			0.0 -- Eğer yukarıdaki hesaplama NULL dönerse skoru 0 yap
+		) as explore_score
+	FROM trips t
+	JOIN users u ON t.user_id = u.id
+	WHERE t.is_active = true AND t.is_public = true
+	  -- 🛡️ Blok ve Gizlilik Duvarı (Aynı kalıyor)
+	  AND NOT EXISTS (
+		  SELECT 1 FROM local_blocks 
+		  WHERE (blocker_id = $1 AND blocked_id = t.user_id) OR (blocker_id = t.user_id AND blocked_id = $1)
+	  )
+	  AND (u.is_private = false OR EXISTS (
+		  SELECT 1 FROM local_follows WHERE follower_id = $1 AND following_id = t.user_id AND status = 'ACCEPTED'
+	  ))
+	ORDER BY explore_score DESC
+	LIMIT $2 OFFSET $3;
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("lightweight explore query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var trips []domain.TripExploreDTO
+	for rows.Next() {
+		var t domain.TripExploreDTO
+		var score float64 // Puanı okuyoruz ama dışarı vermiyoruz
+
+		err := rows.Scan(
+			&t.ID, &t.UserID, &t.Title, &t.DisplayImage, &t.TotalLikes, &t.TotalComments, &t.ViewCount, &t.PublishedAt,
+			&t.OwnerUsername, &t.OwnerAvatar, &t.WaypointCount, &t.DisplayImage, &score,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan explore trip failed: %w", err)
+		}
+		trips = append(trips, t)
+	}
+
+	return trips, nil
+}

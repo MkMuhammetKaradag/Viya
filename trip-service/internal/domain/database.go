@@ -18,6 +18,7 @@ type TripRepository interface {
 	IncrementUniqueView(ctx context.Context, tripID, userID uuid.UUID) error
 
 	GetUserTrips(ctx context.Context, userID uuid.UUID, page, limit int) ([]TripSummary, error)
+	GetExploreTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]TripExploreDTO, error)
 
 	DeleteWaypoint(ctx context.Context, waypointID uuid.UUID) error
 	ReorderWaypoints(ctx context.Context, wpID uuid.UUID, index int) error

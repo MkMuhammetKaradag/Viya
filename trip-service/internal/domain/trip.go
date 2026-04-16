@@ -74,3 +74,26 @@ type TripSummary struct {
 	WaypointCount int       `json:"waypoint_count"`
 	CreatedAt     time.Time `json:"created_at"`
 }
+type TripExploreDTO struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	Title  string    `json:"title"`
+
+	// Ekranda gösterilecek ana fotoğraf (Kapak yoksa ilk durak fotosu)
+	DisplayImage *string `json:"display_image"`
+
+	// Sosyal Kanıt (Social Proof)
+	TotalLikes    int `json:"total_likes"`
+	TotalComments int `json:"total_comments"`
+	ViewCount     int `json:"view_count"`
+
+	// Durak sayısı bilgisi
+	WaypointCount int `json:"waypoint_count"`
+
+	// Sahibi bilgileri (Her gezi için ayrı profil isteği atmamak için)
+	OwnerUsername string  `json:"owner_username"`
+	OwnerAvatar   *string `json:"owner_avatar"`
+
+	// Zaman bilgisi (Relative time hesaplamak için)
+	PublishedAt time.Time `json:"published_at"`
+}

@@ -13,9 +13,10 @@ type Handlers struct {
 }
 
 type tripHandlers struct {
-	Create       *controller.CreateTripController
-	Get          *controller.GetTripController
-	GetUserTrips *controller.GetUserTripsController
+	Create          *controller.CreateTripController
+	Get             *controller.GetTripController
+	GetUserTrips    *controller.GetUserTripsController
+	GetExploreTrips *controller.GetExploreTripsController
 }
 type categoryHandlers struct {
 	Search *controller.SearchCategoriesController
@@ -34,9 +35,10 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
-			Create:       controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
-			Get:          controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
-			GetUserTrips: controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
+			Create:          controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
+			Get:             controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
+			GetUserTrips:    controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
+			GetExploreTrips: controller.NewGetExploreTripsController(usecase.NewGetExploreTripsUseCase(repo, worker)),
 		},
 		WayPoint: &waypointHandlers{
 			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),

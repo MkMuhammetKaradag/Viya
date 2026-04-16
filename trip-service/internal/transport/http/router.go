@@ -25,6 +25,7 @@ func (r *Router) Register(app *fiber.App) {
 	{
 		trips.Post("/", handler.HandleWithFiber[controller.CreateTripRequest, controller.CreateTripResponse](h.Trip.Create))
 		trips.Get("/me", handler.HandleWithFiber[controller.GetUserTripsRequest, controller.GetUserTripsResponse](h.Trip.GetUserTrips))
+		trips.Get("/explore", handler.HandleWithFiber[controller.GetExploreTripsRequest, controller.GetExploreTripsResponse](h.Trip.GetExploreTrips))
 		trips.Get("/:trip_id", handler.HandleWithFiber[controller.GetTripRequest, controller.GetTripResponse](h.Trip.Get))
 
 	}
