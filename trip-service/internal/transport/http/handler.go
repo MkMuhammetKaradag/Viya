@@ -17,6 +17,7 @@ type tripHandlers struct {
 	Get             *controller.GetTripController
 	GetUserTrips    *controller.GetUserTripsController
 	GetExploreTrips *controller.GetExploreTripsController
+	ToggleTripLike  *controller.ToggleTripLikeController
 }
 type categoryHandlers struct {
 	Search *controller.SearchCategoriesController
@@ -39,6 +40,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Get:             controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
 			GetUserTrips:    controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
 			GetExploreTrips: controller.NewGetExploreTripsController(usecase.NewGetExploreTripsUseCase(repo, worker)),
+			ToggleTripLike:  controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
 		},
 		WayPoint: &waypointHandlers{
 			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),

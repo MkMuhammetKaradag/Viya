@@ -31,12 +31,7 @@ func (uc *getTripUseCase) Execute(ctx context.Context, tripID, userID uuid.UUID)
 		return nil, fmt.Errorf("trip not found or access denied")
 	}
 
-	// go func() {
-	// 	// Tekil görüntülenme mantığını
-	// 	_ = uc.tripRepo.IncrementUniqueView(context.Background(), tripID, userID)
-	// }()
-
-	if err := uc.worker.EnqueueIncrementTripView(tripID, userID); err != nil {
+	if err := uc.worker.EnqueueIncrementTrip(tripID, userID, 0.05, "view"); err != nil {
 		fmt.Printf("Warning: Could not enqueue task: %v\n", err)
 	}
 

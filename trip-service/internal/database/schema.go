@@ -139,4 +139,12 @@ const (
 		blocked_id UUID,
 		PRIMARY KEY (blocker_id, blocked_id)
 	)`
+
+	tripLikesTable = `
+	CREATE TABLE IF NOT EXISTS trip_likes (
+		trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+		user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (trip_id, user_id)
+	)`
 )

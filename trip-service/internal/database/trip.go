@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"trip-service/internal/domain"
 
@@ -129,4 +130,80 @@ func (r *Repository) GetExploreTrips(ctx context.Context, userID uuid.UUID, limi
 	}
 
 	return trips, nil
+}
+
+func (r *Repository) ToggleTripLike(ctx context.Context, tripID, userID uuid.UUID) (bool, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+
+	var isLiked bool
+	query := `
+        WITH deleted AS (
+            DELETE FROM trip_likes 
+            WHERE trip_id = $1 AND user_id = $2 
+            RETURNING *
+        ),
+        inserted AS (
+            INSERT INTO trip_likes (trip_id, user_id)
+            SELECT $1, $2 
+            WHERE NOT EXISTS (SELECT 1 FROM deleted)
+            RETURNING true
+        )
+        SELECT COALESCE(
+            (SELECT true FROM inserted), 
+            (SELECT false FROM deleted)
+        )`
+
+	err = tx.QueryRowContext(ctx, query, tripID, userID).Scan(&isLiked)
+	if err != nil {
+		return false, fmt.Errorf("failed to toggle like: %w", err)
+	}
+
+	//  Sayacı güncelle
+	var updateQuery string
+	if isLiked {
+		updateQuery = `UPDATE trips SET total_likes = total_likes + 1 WHERE id = $1`
+	} else {
+		updateQuery = `UPDATE trips SET total_likes = total_likes - 1 WHERE id = $1`
+	}
+
+	_, err = tx.ExecContext(ctx, updateQuery, tripID)
+	if err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+
+	return isLiked, nil
+}
+func (r *Repository) GetTripStatus(ctx context.Context, tripID uuid.UUID) (*domain.TripStatusDTO, error) {
+	query := `
+        SELECT 
+            t.user_id, 
+            t.is_public, 
+            u.is_private as owner_is_private
+        FROM trips t
+        JOIN users u ON t.user_id = u.id
+        WHERE t.id = $1`
+
+	var status domain.TripStatusDTO
+	err := r.db.QueryRowContext(ctx, query, tripID).Scan(
+		&status.UserID,
+		&status.IsPublic,
+		&status.OwnerIsPrivate,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("gezi bulunamadı")
+		}
+		return nil, fmt.Errorf("gezi durumu sorgulanırken hata: %w", err)
+	}
+
+	return &status, nil
 }

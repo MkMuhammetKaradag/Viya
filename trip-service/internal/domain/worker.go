@@ -5,7 +5,7 @@ import "github.com/google/uuid"
 type Worker interface {
 	EnqueueUploadWaypointPhoto(payload UploadWaypointPhotoTaskPayload) error
 	EnqueueTripEmbedding(tripID uuid.UUID) error
-	EnqueueIncrementTripView(tripID, userID uuid.UUID) error
+	EnqueueIncrementTrip(tripID, userID uuid.UUID, weight float32, action string) error
 }
 
 type UploadWaypointPhotoTaskPayload struct {
@@ -14,11 +14,13 @@ type UploadWaypointPhotoTaskPayload struct {
 	Tags       string `json:"tags"` // JSON string olarak React Native'den gelen veri
 }
 
-const TaskIncrementTripView = "task:increment_trip_view"
+const TaskIncrementTrip = "task:increment_trip"
 
-type IncrementTripViewPayload struct {
-	TripID uuid.UUID `json:"trip_id"`
+type InteractionTripPayload struct {
 	UserID uuid.UUID `json:"user_id"`
+	TripID uuid.UUID `json:"trip_id"`
+	Weight float32   `json:"weight"` // 0.05, 0.5, -0.3 vb.
+	Action string    `json:"action"` // "view", "like", "unlike", "comment"
 }
 
 const TaskGenerateTripEmbedding = "task:generate_trip_embedding"

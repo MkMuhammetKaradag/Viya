@@ -42,7 +42,7 @@ func (p *TaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 
 	mux.HandleFunc(TaskUploadWaypointPhoto, p.ProcessWaypointUploadTask)
-	mux.HandleFunc(domain.TaskIncrementTripView, p.ProcessIncrementViewTask)
+	mux.HandleFunc(domain.TaskIncrementTrip, p.ProcessIncrementTripTask)
 	mux.HandleFunc(domain.TaskGenerateTripEmbedding, p.ProcessTripEmbeddingTask)
 
 	log.Println("Worker Processor başlatılıyor...")
@@ -90,21 +90,21 @@ func (p *TaskProcessor) ProcessWaypointUploadTask(ctx context.Context, t *asynq.
 	os.Remove(payload.FilePath)
 	return nil
 }
-func (p *TaskProcessor) ProcessIncrementViewTask(ctx context.Context, t *asynq.Task) error {
-	var payload domain.IncrementTripViewPayload
+func (p *TaskProcessor) ProcessIncrementTripTask(ctx context.Context, t *asynq.Task) error {
+	var payload domain.InteractionTripPayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return err
 	}
 
 	// 1. Mevcut İşlem: Görüntülenme sayısını artır
-	if err := p.repo.IncrementUniqueView(ctx, payload.TripID, payload.UserID); err != nil {
-		fmt.Println("sdsdsdsdsd")
-		return fmt.Errorf("increment view failed: %w", err)
+	switch payload.Action {
+	case "view":
+		p.repo.IncrementUniqueView(ctx, payload.TripID, payload.UserID)
+	case "like":
+
 	}
 
-	// 2. YENİ İŞLEM: Kullanıcının ilgi vektörünü güncelle (Ağırlık: 0.05)
-	// Bu sayede kullanıcı baktıkça zevki yavaşça şekillenir.
-	if err := p.repo.UpdateUserInterest(ctx, payload.UserID, payload.TripID, 0.05); err != nil {
+	if err := p.repo.UpdateUserInterest(ctx, payload.UserID, payload.TripID, payload.Weight); err != nil {
 		// AI güncellemesi kritik değilse sadece logla, görevi tamamen iptal etme
 		fmt.Printf("User interest update failed: %v\n", err)
 	}
@@ -117,17 +117,15 @@ func (p *TaskProcessor) ProcessTripEmbeddingTask(ctx context.Context, t *asynq.T
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return err
 	}
-	
+
 	// 1. Trip detaylarını DB'den çek (Prompt için gerekli tüm bilgilerle)
 	trip, err := p.repo.GetTripByIDForAI(ctx, payload.TripID)
 	if err != nil {
 		return fmt.Errorf("trip not found for embedding: %w", err)
 	}
-	
 
 	// 2. Senin o meşhur "Zengin Prompt"u hazırla
 	prompt := buildRichPrompt(trip)
-	
 
 	// 3. Ollama'ya git ve vektörü al
 	vector, err := p.ai.GetVector(ctx, prompt)

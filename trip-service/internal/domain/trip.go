@@ -97,3 +97,8 @@ type TripExploreDTO struct {
 	// Zaman bilgisi (Relative time hesaplamak için)
 	PublishedAt time.Time `json:"published_at"`
 }
+type TripStatusDTO struct {
+	UserID         uuid.UUID
+	IsPublic       bool
+	OwnerIsPrivate bool
+}

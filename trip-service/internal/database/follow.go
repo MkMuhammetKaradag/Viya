@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -15,4 +16,25 @@ func (r *Repository) UpsertLocalFollow(ctx context.Context, followerID, followin
 
 	_, err := r.db.ExecContext(ctx, query, followerID, followingID, status)
 	return err
+}
+func (r *Repository) CheckFollowStatus(ctx context.Context, followerID, followedID uuid.UUID) (bool, error) {
+
+	if followerID == followedID {
+		return true, nil
+	}
+
+	query := `
+        SELECT EXISTS (
+            SELECT 1 FROM local_follows 
+            WHERE follower_id = $1 AND following_id = $2 and status = 'ACCEPTED'	
+        )`
+
+	var isFollowing bool
+	err := r.db.QueryRowContext(ctx, query, followerID, followedID).Scan(&isFollowing)
+	if err != nil {
+
+		return false, fmt.Errorf("takip durumu sorgulanırken hata: %w", err)
+	}
+
+	return isFollowing, nil
 }

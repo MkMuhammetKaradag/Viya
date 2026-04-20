@@ -33,18 +33,20 @@ func (w *Worker) EnqueueUploadWaypointPhoto(payload domain.UploadWaypointPhotoTa
 	return err
 }
 
-func (w *Worker) EnqueueIncrementTripView(tripID, userID uuid.UUID) error {
-	payload := domain.IncrementTripViewPayload{
+func (w *Worker) EnqueueIncrementTrip(tripID, userID uuid.UUID, weight float32, action string) error {
+	payload := domain.InteractionTripPayload{
 		TripID: tripID,
 		UserID: userID,
+		Weight: weight,
+		Action: action,
 	}
 	data, _ := json.Marshal(payload)
 
-	// Görüntülenme sayısı "critical" bir iş değil, "default" kuyruğuna atabiliriz.
-	task := asynq.NewTask(domain.TaskIncrementTripView, data, asynq.MaxRetry(3), asynq.Queue("default"))
+	task := asynq.NewTask(domain.TaskIncrementTrip, data, asynq.MaxRetry(3), asynq.Queue("default"))
 	_, err := w.client.Enqueue(task)
 	return err
 }
+
 func (w *Worker) EnqueueTripEmbedding(tripID uuid.UUID) error {
 	payload := domain.TripEmbeddingPayload{TripID: tripID}
 	data, _ := json.Marshal(payload)

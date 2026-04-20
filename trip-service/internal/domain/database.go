@@ -19,6 +19,8 @@ type TripRepository interface {
 
 	GetUserTrips(ctx context.Context, userID uuid.UUID, page, limit int) ([]TripSummary, error)
 	GetExploreTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]TripExploreDTO, error)
+	GetTripStatus(ctx context.Context, tripID uuid.UUID) (*TripStatusDTO, error)
+	ToggleTripLike(ctx context.Context, tripID, userID uuid.UUID) (bool, error)
 
 	DeleteWaypoint(ctx context.Context, waypointID uuid.UUID) error
 	ReorderWaypoints(ctx context.Context, wpID uuid.UUID, index int) error
@@ -33,6 +35,7 @@ type TripRepository interface {
 	UpdateUserInterest(ctx context.Context, userID uuid.UUID, tripID uuid.UUID, weight float32) error
 
 	UpsertLocalFollow(ctx context.Context, followerID, followingID uuid.UUID, status string) error
+	CheckFollowStatus(ctx context.Context, followerID, followedID uuid.UUID) (bool, error)
 
 	UpsertLocalBlock(ctx context.Context, blockerID, blockedID uuid.UUID) error
 
