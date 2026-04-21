@@ -37,9 +37,11 @@ func (c *GetExploreTripsController) Handle(fbrCtx fiber.Ctx, req *GetExploreTrip
 		}
 	}
 	offset := (req.Page - 1) * req.Limit
+
 	trips, err := c.usecase.Execute(fbrCtx.Context(), currentUserID, req.Limit, offset)
 	if err != nil {
 		return nil, err
 	}
+
 	return &GetExploreTripsResponse{Trips: trips}, nil
 }

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"trip-service/internal/transport/http/usecase"
 
 	"github.com/gofiber/fiber/v3"
@@ -35,7 +36,7 @@ func (c *ToggleTripLikeController) Handle(fbrCtx fiber.Ctx, req *ToggleTripLikeR
 			currentUserID = parsedID
 		}
 	}
-
+	fmt.Println("geldi", currentUserID, req.TripID)
 	isLiked, err := c.usecase.Execute(fbrCtx.Context(), req.TripID, currentUserID)
 	if err != nil {
 		return nil, err

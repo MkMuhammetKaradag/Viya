@@ -66,6 +66,7 @@ func (r *Repository) UpdateTripEmbedding(ctx context.Context, id uuid.UUID, vect
 	return err
 }
 func (r *Repository) GetExploreTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.TripExploreDTO, error) {
+	fmt.Println(userID)
 	query := `
 	WITH user_context AS (
 		SELECT interest_vector FROM users WHERE id = $1

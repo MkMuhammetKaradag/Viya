@@ -18,9 +18,11 @@ type Trip struct {
 	IsPublic      bool      `json:"is_public" db:"is_public"`
 	PublishedAt   time.Time `json:"published_at" db:"published_at"`
 	ViewCount     int       `json:"view_count" db:"view_count"`
-	CreatedAt     time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at" db:"updated_at"`
+	LikeCount     int       `json:"like_count" db:"like_count"`
 
+	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
+	IsLiked     bool        `json:"is_liked"`
 	Waypoints   []Waypoint  `json:"waypoints,omitempty"`
 	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
 

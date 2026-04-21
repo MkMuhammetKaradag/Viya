@@ -22,7 +22,7 @@ func NewGetTripUseCase(tripRepo domain.TripRepository, worker domain.Worker) Get
 }
 
 func (uc *getTripUseCase) Execute(ctx context.Context, tripID, userID uuid.UUID) (*domain.Trip, error) {
-	trip, err := uc.tripRepo.GetTripWithWaypointsAndPhotos(ctx, tripID)
+	trip, err := uc.tripRepo.GetTripWithWaypointsAndPhotos(ctx, tripID, userID)
 	if err != nil {
 		return nil, err
 	}

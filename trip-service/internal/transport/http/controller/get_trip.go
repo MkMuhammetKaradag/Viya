@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"trip-service/internal/domain"
 	"trip-service/internal/transport/http/usecase"
 
@@ -38,6 +39,7 @@ func (c *GetTripController) Handle(fbrCtx fiber.Ctx, req *GetTripRequest) (*GetT
 	}
 	trip, err := c.usecase.Execute(fbrCtx.Context(), req.TripID, currentUserID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return &GetTripResponse{Trip: trip}, nil

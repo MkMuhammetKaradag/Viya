@@ -14,7 +14,7 @@ type TripRepository interface {
 	SearchCategories(ctx context.Context, query string) ([]Category, error)
 	// GetTripByID(ctx context.Context, tripID uuid.UUID) (*Trip, error)
 
-	GetTripWithWaypointsAndPhotos(ctx context.Context, tripID uuid.UUID) (*Trip, error)
+	GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, currentUserID uuid.UUID) (*Trip, error)
 	IncrementUniqueView(ctx context.Context, tripID, userID uuid.UUID) error
 
 	GetUserTrips(ctx context.Context, userID uuid.UUID, page, limit int) ([]TripSummary, error)
