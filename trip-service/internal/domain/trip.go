@@ -73,6 +73,7 @@ type TripSummary struct {
 	CoverImageURL *string   `json:"cover_image_url"`
 	IsPublic      bool      `json:"is_public"`
 	ViewCount     int       `json:"view_count"`
+	LikeCount     int       `json:"like_count"`
 	WaypointCount int       `json:"waypoint_count"`
 	CreatedAt     time.Time `json:"created_at"`
 }

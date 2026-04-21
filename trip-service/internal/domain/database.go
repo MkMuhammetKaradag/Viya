@@ -18,6 +18,7 @@ type TripRepository interface {
 	IncrementUniqueView(ctx context.Context, tripID, userID uuid.UUID) error
 
 	GetUserTrips(ctx context.Context, userID uuid.UUID, page, limit int) ([]TripSummary, error)
+	GetLikedTrips(ctx context.Context, userID uuid.UUID, page, limit int) ([]TripSummary, error)
 	GetExploreTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]TripExploreDTO, error)
 	GetTripStatus(ctx context.Context, tripID uuid.UUID) (*TripStatusDTO, error)
 	ToggleTripLike(ctx context.Context, tripID, userID uuid.UUID) (bool, error)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"trip-service/internal/domain"
 
 	"github.com/google/uuid"
 )
@@ -76,4 +77,54 @@ func formatVector(v []float32) string {
 	}
 	sb.WriteString("]")
 	return sb.String()
+}
+
+func (r *Repository) GetLikedTrips(ctx context.Context, userID uuid.UUID, limit, page int) ([]domain.TripSummary, error) {
+
+	offset := (page - 1) * limit
+	query := `
+        SELECT 
+            t.id, 
+            t.title, 
+            COALESCE(
+                t.cover_image_url, 
+                (SELECT p.url FROM photos p 
+                 JOIN waypoints w ON p.waypoint_id = w.id 
+                 WHERE w.trip_id = t.id 
+                 ORDER BY w.order_index ASC, p.created_at ASC 
+                 LIMIT 1)
+            ) as effective_cover_url,
+            t.is_public, 
+            t.view_count, 
+			t.total_likes,
+            t.created_at,
+            (SELECT COUNT(*) FROM waypoints WHERE trip_id = t.id) as waypoint_count
+        FROM trips t
+        INNER JOIN trip_likes tl ON t.id = tl.trip_id
+        WHERE tl.user_id = $1
+        ORDER BY tl.created_at DESC
+        LIMIT $2 OFFSET $3 
+    `
+
+	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	count := 0
+	var summaries []domain.TripSummary
+	for rows.Next() {
+		count++
+		var s domain.TripSummary
+		err := rows.Scan(
+			&s.ID, &s.Title, &s.CoverImageURL, &s.IsPublic, &s.ViewCount, &s.LikeCount, &s.CreatedAt, &s.WaypointCount,
+		)
+		if err != nil {
+			fmt.Printf("SCAN HATASI: %v\n", err)
+			return nil, err
+		}
+		summaries = append(summaries, s)
+	}
+	return summaries, nil
 }
