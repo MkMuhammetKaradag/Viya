@@ -32,6 +32,7 @@ func (uc *blockUserUseCase) Execute(ctx context.Context, BlockerID, targetUserID
 		Type: messaging.SocialTypes.BlockUser,
 		ToServices: []messaging.ServiceType{
 			messaging.TripService,
+			messaging.UserService,
 		},
 		Data: map[string]interface{}{
 			"blocker": BlockerID,

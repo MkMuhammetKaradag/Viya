@@ -53,6 +53,7 @@ func (uc *followUserUseCase) Execute(ctx context.Context, followerID, targetUser
 		Type: messaging.SocialTypes.FollowUser,
 		ToServices: []messaging.ServiceType{
 			messaging.TripService,
+			messaging.UserService,
 		},
 		Data: map[string]interface{}{
 			"follower":  followerID,

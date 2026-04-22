@@ -97,9 +97,6 @@ func setupHttpRouter(cfg *config.Config, userRepo domain.UserRepository, cloudin
 	return httptransport.NewRouter(handler)
 }
 
-func setupRabbitRouter(cfg *config.Config, userRepo domain.UserRepository) map[messaging.MessageType]domain.MessageHandler {
-	return rabbitmq.SetupMessageHandlers(userRepo)
-}
 func getServerConfig(cfg *config.Config) server.ServerConfig {
 	return server.ServerConfig{
 		Port:         cfg.Server.Port,

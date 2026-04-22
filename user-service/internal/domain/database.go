@@ -21,5 +21,9 @@ type UserRepository interface {
 	UpdateBanner(ctx context.Context, userID uuid.UUID, banerURL string) error
 	UpdateProfile(ctx context.Context, userID uuid.UUID, params UpdateProfileParams) error
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error)
+
+	UpsertLocalBlock(ctx context.Context, blockerID, blockedID uuid.UUID) error
+	UpsertLocalFollow(ctx context.Context, followerID, followingID uuid.UUID, status string) error
+
 	Close() error
 }
