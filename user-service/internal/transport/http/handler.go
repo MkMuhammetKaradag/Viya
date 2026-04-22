@@ -15,6 +15,7 @@ type UserHandlers struct {
 	UploadBanner  *controller.UploadBannerController
 	UpdateProfile *controller.UpdateProfileController
 	GetMe         *controller.GetMeController
+	SearchUsers   *controller.SearchUsersController
 }
 
 func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.CloudinaryService, rabbitClient domain.RabbitMQClient) *Handler {
@@ -24,6 +25,7 @@ func NewHandlers(userRepo domain.UserRepository, cloudinaryService domain.Cloudi
 			UploadBanner:  controller.NewUploadBannerController(usecase.NewUploadBannerUseCase(userRepo, cloudinaryService)),
 			UpdateProfile: controller.NewUpdateProfileController(usecase.NewUpdateProfileUseCase(userRepo, rabbitClient)),
 			GetMe:         controller.NewGetMeController(usecase.NewGetMeUseCase(userRepo)),
+			SearchUsers:   controller.NewSearchUsersController(usecase.NewSearchUsersUseCase(userRepo)),
 		},
 	}
 }
