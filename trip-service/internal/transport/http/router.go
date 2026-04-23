@@ -45,5 +45,9 @@ func (r *Router) Register(app *fiber.App) {
 	{
 		categories.Get("/search", handler.HandleWithFiber[controller.SearchCategoriesRequest, controller.SearchCategoriesResponse](h.Category.Search))
 	}
+	comments := api.Group("/comments")
+	{
+		comments.Post("/", handler.HandleWithFiber[controller.CreateCommentRequest, controller.CreateCommentResponse](h.Comment.Create))
+	}
 
 }

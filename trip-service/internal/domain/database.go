@@ -40,5 +40,7 @@ type TripRepository interface {
 
 	UpsertLocalBlock(ctx context.Context, blockerID, blockedID uuid.UUID) error
 
+	CreateComment(ctx context.Context, comment *Comment) (uuid.UUID, error)
+
 	Close() error
 }

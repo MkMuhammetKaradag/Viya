@@ -69,6 +69,9 @@ func runMigrations(db *sql.DB) error {
 	if _, err := db.Exec(tripLikesTable); err != nil {
 		return fmt.Errorf("failed to create trip_likes table: %w", err)
 	}
+	if _, err := db.Exec(commentsTable); err != nil {
+		return fmt.Errorf("failed to create comments table: %w", err)
+	}
 
 	log.Println("Database migrated")
 	return nil

@@ -15,6 +15,7 @@ func main() {
 	application.RegisterService("trips-service", []string{"http://localhost:8081"}, "/api/v1/trips")
 	application.RegisterService("waypoints-service", []string{"http://localhost:8081"}, "/api/v1/waypoints")
 	application.RegisterService("category-service", []string{"http://localhost:8081"}, "/api/v1/categories")
+	application.RegisterService("comments-service", []string{"http://localhost:8081"}, "/api/v1/comments")
 	application.RegisterService("auth-service", []string{"http://localhost:8082"}, "/api/v1/auth")
 	application.RegisterService("user-service", []string{"http://localhost:8083"}, "/api/v1/users")
 	application.RegisterService("social-service", []string{"http://localhost:8084"}, "/api/v1/social")

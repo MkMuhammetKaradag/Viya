@@ -9,7 +9,7 @@ import (
 )
 
 type SearchUsersRequest struct {
-	Query string `query:"query" validate:"omitempty,min=3"`
+	Query string `query:"q" validate:"omitempty,min=3"`
 	Page  int    `query:"page" validate:"omitempty,min=1"`
 	Limit int    `query:"limit" validate:"omitempty,min=1,max=50"`
 }
