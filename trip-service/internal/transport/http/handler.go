@@ -37,7 +37,7 @@ type waypointHandlers struct {
 	Update  *controller.UpdateWaypointController
 }
 
-func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker) *Handlers {
+func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker, moderationService domain.ModerationService) *Handlers {
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
@@ -59,7 +59,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Search: controller.NewSearchCategoriesController(usecase.NewSearchCategoriesUseCase(repo)),
 		},
 		Comment: &commentHandlers{
-			Create: controller.NewCreateCommentController(usecase.NewCreateCommentUseCase(repo)),
+			Create: controller.NewCreateCommentController(usecase.NewCreateCommentUseCase(repo, moderationService)),
 		},
 	}
 }

@@ -2,11 +2,13 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 	"trip-service/infrastructure/ai"
 	"trip-service/infrastructure/img"
+	"trip-service/infrastructure/moderation"
 	"trip-service/infrastructure/worker"
 	"trip-service/internal/config"
 	"trip-service/internal/database"
@@ -28,6 +30,7 @@ type App struct {
 	repo         domain.TripRepository
 	rabbit       domain.RabbitMQClient
 	rabbitRouter domain.RabbitRouter
+	moderation   domain.ModerationService
 	// Add your application fields here
 }
 
@@ -51,6 +54,7 @@ type container struct {
 	repo         domain.TripRepository
 	rabbit       domain.RabbitMQClient
 	rabbitRouter domain.RabbitRouter
+	moderation   domain.ModerationService
 }
 
 func buildContainer(cfg *config.Config) (*container, error) {
@@ -59,6 +63,10 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		return nil, fmt.Errorf("init postgres repository: %w", err)
 	}
 	aiService := ai.NewOllamaService()
+	moderationService, err := moderation.NewModerationService(context.Background(), aiService)
+	if err != nil {
+		return nil, fmt.Errorf("init moderation service: %w", err)
+	}
 	imgSvc, err := img.NewCloudinaryService(cfg.Cloudinary.CloudName, cfg.Cloudinary.APIKey, cfg.Cloudinary.APISecret)
 	if err != nil {
 		return nil, err
@@ -82,7 +90,7 @@ func buildContainer(cfg *config.Config) (*container, error) {
 		}
 	}()
 
-	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk, aiService)
+	httpRouter := setupHttpRouter(cfg, repo, imgSvc, wrk, aiService, moderationService)
 	return &container{
 		processor:    processor,
 		server:       server.NewServer(getServerConfig(cfg), httpRouter),
@@ -148,8 +156,8 @@ func (a *App) Start() error {
 		return nil
 	}
 }
-func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker,a domain.AIService) server.RouteRegistrar {
+func setupHttpRouter(cfg *config.Config, r domain.TripRepository, i domain.ImageService, w domain.Worker, a domain.AIService, m domain.ModerationService) server.RouteRegistrar {
 
-	httpHandlers := httptransport.NewHandlers(r, i, w)
+	httpHandlers := httptransport.NewHandlers(r, i, w, m)
 	return httptransport.NewRouter(httpHandlers)
 }
