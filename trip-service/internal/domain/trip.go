@@ -18,7 +18,8 @@ type Trip struct {
 	IsPublic      bool      `json:"is_public" db:"is_public"`
 	PublishedAt   time.Time `json:"published_at" db:"published_at"`
 	ViewCount     int       `json:"view_count" db:"view_count"`
-	LikeCount     int       `json:"like_count" db:"like_count"`
+	LikeCount     int       `json:"like_count" db:"total_likes"`
+	CommentCount  int       `json:"comment_count" db:"total_comments"`
 
 	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
@@ -74,6 +75,7 @@ type TripSummary struct {
 	IsPublic      bool      `json:"is_public"`
 	ViewCount     int       `json:"view_count"`
 	LikeCount     int       `json:"like_count"`
+	CommentCount  int       `json:"comment_count"`
 	WaypointCount int       `json:"waypoint_count"`
 	CreatedAt     time.Time `json:"created_at"`
 }

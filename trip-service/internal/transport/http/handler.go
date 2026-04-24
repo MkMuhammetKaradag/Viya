@@ -22,7 +22,8 @@ type tripHandlers struct {
 	ToggleTripLike  *controller.ToggleTripLikeController
 }
 type commentHandlers struct {
-	Create *controller.CreateCommentController
+	Create          *controller.CreateCommentController
+	GetTripComments *controller.GetTripCommentsController
 }
 type categoryHandlers struct {
 	Search *controller.SearchCategoriesController
@@ -59,7 +60,8 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Search: controller.NewSearchCategoriesController(usecase.NewSearchCategoriesUseCase(repo)),
 		},
 		Comment: &commentHandlers{
-			Create: controller.NewCreateCommentController(usecase.NewCreateCommentUseCase(repo, moderationService)),
+			Create:          controller.NewCreateCommentController(usecase.NewCreateCommentUseCase(repo, moderationService)),
+			GetTripComments: controller.NewGetTripCommentsController(usecase.NewGetTripCommentsUseCase(repo)),
 		},
 	}
 }

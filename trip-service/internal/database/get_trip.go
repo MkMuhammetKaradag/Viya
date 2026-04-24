@@ -12,7 +12,7 @@ import (
 func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, currentUserID uuid.UUID) (*domain.Trip, error) {
 	query := `
     SELECT 
-        t.id, t.user_id, t.title, t.description, t.cover_image_url, t.is_active, t.is_public, t.published_at, t.view_count,t.total_likes, t.created_at,
+        t.id, t.user_id, t.title, t.description, t.cover_image_url, t.is_active, t.is_public, t.published_at, t.view_count,t.total_likes, t.total_comments, t.created_at,
         
         EXISTS(SELECT 1 FROM trip_likes WHERE trip_id = t.id AND user_id = $2) as is_liked,
         w.id as wp_id, w.title as wp_title, w.description as wp_desc, w.order_index, w.latitude, w.longitude, w.note, w.created_at as wp_created_at,
@@ -40,19 +40,19 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, 
 	for rows.Next() {
 		var (
 			// Trip alanları
-			tID, tUserID                   uuid.UUID
-			tTitle, tDesc                  string
-			tCover                         *string
-			tIsActive, tIsPublic, tIsLiked bool
-			tPublished, tCreated           time.Time
-			tViewCount, tLikeCount         int
-			wpID                           *uuid.UUID
-			wpTitle, wpDesc, wpNote        *string
-			wpOrder                        *int
-			wpLat, wpLon                   *float64
-			wpCreated                      *time.Time
-			pID                            *uuid.UUID
-			pURL                           *string
+			tID, tUserID                          uuid.UUID
+			tTitle, tDesc                         string
+			tCover                                *string
+			tIsActive, tIsPublic, tIsLiked        bool
+			tPublished, tCreated                  time.Time
+			tViewCount, tLikeCount, tCommentCount int
+			wpID                                  *uuid.UUID
+			wpTitle, wpDesc, wpNote               *string
+			wpOrder                               *int
+			wpLat, wpLon                          *float64
+			wpCreated                             *time.Time
+			pID                                   *uuid.UUID
+			pURL                                  *string
 			// 🆕 Etiket alanları
 			tagID      *uuid.UUID
 			tagLabel   *string
@@ -60,7 +60,7 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, 
 		)
 
 		err := rows.Scan(
-			&tID, &tUserID, &tTitle, &tDesc, &tCover, &tIsActive, &tIsPublic, &tPublished, &tViewCount, &tLikeCount, &tCreated,
+			&tID, &tUserID, &tTitle, &tDesc, &tCover, &tIsActive, &tIsPublic, &tPublished, &tViewCount, &tLikeCount, &tCommentCount, &tCreated,
 			&tIsLiked, &wpID, &wpTitle, &wpDesc, &wpOrder, &wpLat, &wpLon, &wpNote, &wpCreated,
 			&pID, &pURL,
 			&tagID, &tagLabel, &tagX, &tagY,
@@ -74,7 +74,7 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, 
 			trip = &domain.Trip{
 				ID: tID, UserID: tUserID, Title: tTitle, Description: tDesc,
 				CoverImageURL: tCover, IsActive: tIsActive, IsPublic: tIsPublic,
-				PublishedAt: tPublished, ViewCount: tViewCount, LikeCount: tLikeCount, CreatedAt: tCreated,
+				PublishedAt: tPublished, ViewCount: tViewCount, LikeCount: tLikeCount, CommentCount: tCommentCount, CreatedAt: tCreated,
 				Waypoints: []domain.Waypoint{},
 				IsLiked:   tIsLiked,
 			}

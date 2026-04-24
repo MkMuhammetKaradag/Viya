@@ -48,6 +48,7 @@ func (r *Router) Register(app *fiber.App) {
 	comments := api.Group("/comments")
 	{
 		comments.Post("/", handler.HandleWithFiber[controller.CreateCommentRequest, controller.CreateCommentResponse](h.Comment.Create))
+		comments.Get("/trip/:trip_id", handler.HandleWithFiber[controller.GetTripCommentsRequest, controller.GetTripCommentsResponse](h.Comment.GetTripComments))
 	}
 
 }

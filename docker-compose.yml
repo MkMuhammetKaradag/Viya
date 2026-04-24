@@ -39,3 +39,5 @@ services:
 volumes:
   postgres_data:
   ollama_data:
+
+#  docker exec -it marketplace-ollama ollama pull nomic-embed-text
