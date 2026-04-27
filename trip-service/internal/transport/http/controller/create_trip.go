@@ -11,7 +11,6 @@ import (
 
 // Hibrit yapıyı destekleyen yeni Request DTO'su
 type CreateTripRequest struct {
-	// UserID        uuid.UUID  `json:"user_id" validate:"required"`
 	Title         string     `json:"title" validate:"required,min=3"`
 	Desc          string     `json:"desc,omitempty"`
 	CoverImageURL *string    `json:"cover_image_url,omitempty"`
@@ -31,7 +30,7 @@ type WaypointRequest struct {
 	Longitude   float64        `json:"longitude" validate:"required"`
 	Note        string         `json:"note"`
 	Photos      []PhotoRequest `json:"photos,omitempty"`
-	CategoryID  *uuid.UUID     `json:"category_id,omitempty"`
+	CategoryID  *uuid.UUID     `json:"category_id"`
 }
 type PhotoRequest struct {
 	URL  string       `json:"url"`

@@ -42,6 +42,7 @@ type TripRepository interface {
 
 	CreateComment(ctx context.Context, comment *Comment) (uuid.UUID, error)
 	GetTripComments(ctx context.Context, viewerID uuid.UUID, tripID uuid.UUID, page, limit int) ([]Comment, error)
+	GetCommentReplies(ctx context.Context, parentID uuid.UUID, page, limit int) ([]Comment, error)
 
 	Close() error
 }
