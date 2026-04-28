@@ -24,7 +24,9 @@ func (r *Router) Register(app *fiber.App) {
 	trips := api.Group("/trips")
 	{
 		trips.Post("/", handler.HandleWithFiber[controller.CreateTripRequest, controller.CreateTripResponse](h.Trip.Create))
-		trips.Get("/me", handler.HandleWithFiber[controller.GetUserTripsRequest, controller.GetUserTripsResponse](h.Trip.GetUserTrips))
+		trips.Get("/user/:user_id", handler.HandleWithFiber[controller.GetUserTripsRequest, controller.GetUserTripsResponse](h.Trip.GetUserTrips))
+		trips.Get("/me", handler.HandleWithFiber[controller.GetMeTripsRequest, controller.GetMeTripsResponse](h.Trip.GetMeTrips))
+
 		trips.Get("/explore", handler.HandleWithFiber[controller.GetExploreTripsRequest, controller.GetExploreTripsResponse](h.Trip.GetExploreTrips))
 		trips.Get("/liked", handler.HandleWithFiber[controller.GetLikedTripsRequest, controller.GetLikedTripsResponse](h.Trip.GetLikedTrips))
 		trips.Patch("/:trip_id/like", handler.HandleWithFiber[controller.ToggleTripLikeRequest, controller.ToggleTripLikeResponse](h.Trip.ToggleTripLike))

@@ -10,8 +10,9 @@ import (
 )
 
 type GetUserTripsRequest struct {
-	Page  int `query:"page" validate:"omitempty,min=1"`
-	Limit int `query:"limit" validate:"omitempty,min=1,max=50"`
+	Page         int       `query:"page" validate:"omitempty,min=1"`
+	Limit        int       `query:"limit" validate:"omitempty,min=1,max=50"`
+	TargetUserID uuid.UUID `uri:"user_id"`
 }
 
 type GetUserTripsResponse struct {
@@ -44,7 +45,7 @@ func (c *GetUserTripsController) Handle(fbrCtx fiber.Ctx, req *GetUserTripsReque
 		return nil, fiber.ErrUnauthorized
 	}
 
-	trips, err := c.usecase.Execute(fbrCtx.Context(), parsedID, req.Page, req.Limit)
+	trips, err := c.usecase.Execute(fbrCtx.Context(), parsedID, req.TargetUserID, req.Page, req.Limit)
 	if err != nil {
 		return nil, err
 	}

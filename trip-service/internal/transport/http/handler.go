@@ -17,6 +17,7 @@ type tripHandlers struct {
 	Create          *controller.CreateTripController
 	Get             *controller.GetTripController
 	GetUserTrips    *controller.GetUserTripsController
+	GetMeTrips      *controller.GetMeTripsController
 	GetLikedTrips   *controller.GetLikedTripsController
 	GetExploreTrips *controller.GetExploreTripsController
 	ToggleTripLike  *controller.ToggleTripLikeController
@@ -46,6 +47,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			Create:          controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
 			Get:             controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
 			GetUserTrips:    controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
+			GetMeTrips:      controller.NewGetMeTripsController(usecase.NewGetMeTripsUseCase(repo)),
 			GetExploreTrips: controller.NewGetExploreTripsController(usecase.NewGetExploreTripsUseCase(repo, worker)),
 			ToggleTripLike:  controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
 			GetLikedTrips:   controller.NewGetLikedTripsController(usecase.NewGetLikedTripsUseCase(repo)),

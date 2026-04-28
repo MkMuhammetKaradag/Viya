@@ -8,7 +8,7 @@ import (
 )
 
 type GetUserTripsUseCase interface {
-	Execute(ctx context.Context, userID uuid.UUID, page, limit int) ([]domain.TripSummary, error)
+	Execute(ctx context.Context, currentUserID, targetUserID uuid.UUID, page, limit int) ([]domain.TripSummary, error)
 }
 
 type getUserTripsUseCase struct {
@@ -19,8 +19,8 @@ func NewGetUserTripsUseCase(tripRepo domain.TripRepository) GetUserTripsUseCase 
 	return &getUserTripsUseCase{tripRepo: tripRepo}
 }
 
-func (uc *getUserTripsUseCase) Execute(ctx context.Context, userID uuid.UUID, page, limit int) ([]domain.TripSummary, error) {
-	trips, err := uc.tripRepo.GetUserTrips(ctx, userID, page, limit)
+func (uc *getUserTripsUseCase) Execute(ctx context.Context, currentUserID, targetUserID uuid.UUID, page, limit int) ([]domain.TripSummary, error) {
+	trips, err := uc.tripRepo.GetUserTrips(ctx, currentUserID, targetUserID, page, limit)
 	if err != nil {
 		return nil, err
 	}

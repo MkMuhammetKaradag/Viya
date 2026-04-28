@@ -54,6 +54,7 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 	}))
 	protectedPrefixes := []string{
 		"/api/v1/trips/me",
+		"/api/v1/trips/user",
 		"/api/v1/trips/liked",
 		"/api/v1/trips/explore",
 		"/api/v1/trips",
