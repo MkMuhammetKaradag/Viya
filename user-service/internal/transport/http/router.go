@@ -28,6 +28,7 @@ func (r *Router) Register(app *fiber.App) {
 		users.Put("/update-profile", handler.HandleWithFiber[controller.UpdateProfileRequest, controller.UpdateProfileResponse](h.User.UpdateProfile))
 		users.Get("/me", handler.HandleWithFiber[controller.GetMeRequest, controller.GetMeResponse](h.User.GetMe))
 		users.Get("/search", handler.HandleWithFiber[controller.SearchUsersRequest, controller.SearchUsersResponse](h.User.SearchUsers))
+		users.Get("/profile/:user_id", handler.HandleWithFiber[controller.GetUserRequest, controller.GetUserResponse](h.User.GetUser))
 	}
 
 }

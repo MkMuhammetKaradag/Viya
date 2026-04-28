@@ -22,12 +22,17 @@ type User struct {
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
+
 type UserSummary struct {
 	ID          uuid.UUID `json:"id"`
 	Username    string    `json:"username"`
 	FirstName   *string   `json:"first_name"`
 	LastName    *string   `json:"last_name"`
 	AvatarURL   *string   `json:"avatar_url"`
+	BannerURL   *string   `json:"banner_url"`
+	Website     *string   `json:"website"`
+	Bio         *string   `json:"bio"`
+	Location    *string   `json:"location"`
 	IsPrivate   bool      `json:"is_private"`
 	IsFollowing bool      `json:"is_following"`
 }
