@@ -35,4 +35,5 @@ type UserSummary struct {
 	Location    *string   `json:"location"`
 	IsPrivate   bool      `json:"is_private"`
 	IsFollowing bool      `json:"is_following"`
+	IsRequested bool      `json:"is_requested"`
 }

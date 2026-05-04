@@ -16,7 +16,7 @@ type GetUserTripsRequest struct {
 }
 
 type GetUserTripsResponse struct {
-	Trips []domain.TripSummary `json:"trip"`
+	Trips []domain.TripSummary `json:"trips"`
 }
 type GetUserTripsController struct {
 	usecase usecase.GetUserTripsUseCase

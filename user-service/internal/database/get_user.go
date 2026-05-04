@@ -15,7 +15,11 @@ func (r *Repository) GetUser(ctx context.Context, currentUserID, userID uuid.UUI
         EXISTS (
             SELECT 1 FROM local_follows 
             WHERE follower_id = $1 AND following_id = users.id AND status = 'ACCEPTED'
-        ) AS is_following
+        ) AS is_following,
+		EXISTS (
+			SELECT 1 FROM local_follows 
+			WHERE follower_id = $1 AND following_id = users.id AND status = 'PENDING'
+		) AS is_requested
         FROM users
         WHERE id = $2 
           AND deleted_at IS NULL
@@ -29,7 +33,7 @@ func (r *Repository) GetUser(ctx context.Context, currentUserID, userID uuid.UUI
 	err := r.db.QueryRowContext(ctx, query, currentUserID, userID).Scan(
 		&user.ID, &user.Username, &user.FirstName, &user.LastName, &user.Website,
 		&user.Bio, &user.Location, &user.AvatarURL, &user.BannerURL,
-		&user.IsPrivate, &user.IsFollowing,
+		&user.IsPrivate, &user.IsFollowing, &user.IsRequested,
 	)
 
 	if err != nil {
