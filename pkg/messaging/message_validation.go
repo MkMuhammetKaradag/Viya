@@ -2,10 +2,11 @@ package messaging
 
 var allowedMessageTypes = map[ServiceType]map[MessageType]bool{
 	UserService: {
-		AuthTypes.CreatedUser:  true,
-		SocialTypes.BlockUser:  true,
-		SocialTypes.FollowUser: true,
-		"password_reset":       true,
+		AuthTypes.CreatedUser:    true,
+		SocialTypes.BlockUser:    true,
+		SocialTypes.FollowUser:   true,
+		SocialTypes.UnFollowUser: true,
+		"password_reset":         true,
 	},
 	AuthService: {
 		"session_expired": true,

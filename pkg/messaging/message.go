@@ -28,12 +28,14 @@ var UserTypes = struct {
 	UpdatedUser: "updated_user",
 }
 var SocialTypes = struct {
-	FollowUser MessageType
-	BlockUser  MessageType
+	FollowUser   MessageType
+	UnFollowUser MessageType
+	BlockUser    MessageType
 }{
 
-	FollowUser: "follow_user",
-	BlockUser:  "block_user",
+	FollowUser:   "follow_user",
+	UnFollowUser: "unfollow_user",
+	BlockUser:    "block_user",
 }
 
 type Message struct {

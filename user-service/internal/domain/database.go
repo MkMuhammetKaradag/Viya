@@ -25,6 +25,7 @@ type UserRepository interface {
 
 	UpsertLocalBlock(ctx context.Context, blockerID, blockedID uuid.UUID) error
 	UpsertLocalFollow(ctx context.Context, followerID, followingID uuid.UUID, status string) error
+	DeleteLocalFollow(ctx context.Context, followerID, followingID uuid.UUID) error
 
 	SearchUsers(ctx context.Context, query string, currentUserID uuid.UUID, page int, limit int) ([]UserSummary, error)
 

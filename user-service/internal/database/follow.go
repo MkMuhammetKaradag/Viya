@@ -17,6 +17,23 @@ func (r *Repository) UpsertLocalFollow(ctx context.Context, followerID, followin
 	_, err := r.db.ExecContext(ctx, query, followerID, followingID, status)
 	return err
 }
+func (r *Repository) DeleteLocalFollow(ctx context.Context, followerID, followingID uuid.UUID) error {
+	query := `
+        DELETE FROM local_follows 
+        WHERE follower_id = $1 AND following_id = $2;`
+
+	result, err := r.db.ExecContext(ctx, query, followerID, followingID)
+	if err != nil {
+		return err
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("No follow-up relationship found.")
+	}
+
+	return nil
+}
 func (r *Repository) CheckFollowStatus(ctx context.Context, followerID, followedID uuid.UUID) (bool, error) {
 
 	if followerID == followedID {

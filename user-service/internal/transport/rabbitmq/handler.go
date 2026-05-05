@@ -8,9 +8,10 @@ import (
 )
 
 type Handlers struct {
-	UserCreated domain.MessageHandler
-	FollowUser  domain.MessageHandler
-	BlockUser   domain.MessageHandler
+	UserCreated  domain.MessageHandler
+	FollowUser   domain.MessageHandler
+	UnFollowUser domain.MessageHandler
+	BlockUser    domain.MessageHandler
 }
 
 func NewMessageHandlers(repo domain.UserRepository) *Handlers {
@@ -25,6 +26,9 @@ func NewMessageHandlers(repo domain.UserRepository) *Handlers {
 		BlockUser: controller.NewBlockUserHandler(
 			usecase.NewBlockUserUseCase(repo),
 		),
+		UnFollowUser: controller.NewUnFollowUserHandler(
+			usecase.NewUnFollowUserUseCase(repo),
+		),
 	}
 }
 
@@ -32,8 +36,9 @@ func SetupMessageHandlers(repo domain.UserRepository) map[messaging.MessageType]
 	h := NewMessageHandlers(repo)
 
 	return map[messaging.MessageType]domain.MessageHandler{
-		messaging.AuthTypes.CreatedUser:  h.UserCreated,
-		messaging.SocialTypes.FollowUser: h.FollowUser,
-		messaging.SocialTypes.BlockUser:  h.BlockUser,
+		messaging.AuthTypes.CreatedUser:    h.UserCreated,
+		messaging.SocialTypes.FollowUser:   h.FollowUser,
+		messaging.SocialTypes.BlockUser:    h.BlockUser,
+		messaging.SocialTypes.UnFollowUser: h.UnFollowUser,
 	}
 }

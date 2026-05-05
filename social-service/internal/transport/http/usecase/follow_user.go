@@ -49,6 +49,9 @@ func (uc *followUserUseCase) Execute(ctx context.Context, followerID, targetUser
 	}
 
 	status, err := uc.repo.CreateFollow(ctx, followerID, targetUserID)
+	if err != nil {
+		return "", err
+	}
 	updatedMessage := messaging.Message{
 		Type: messaging.SocialTypes.FollowUser,
 		ToServices: []messaging.ServiceType{

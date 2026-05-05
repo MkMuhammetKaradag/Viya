@@ -3,7 +3,9 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"social-service/internal/domain"
+	"viya/pkg/messaging"
 
 	"github.com/google/uuid"
 )
@@ -26,5 +28,27 @@ func (uc *UnfollowUserUseCase) Execute(ctx context.Context, followerID, targetUs
 		return fmt.Errorf("Invalid transaction")
 	}
 
-	return uc.repo.UnfollowUser(ctx, followerID, targetUserID)
+	err := uc.repo.UnfollowUser(ctx, followerID, targetUserID)
+	if err != nil {
+		return fmt.Errorf("Failed to unfollow user: %w", err)
+	}
+	updatedMessage := messaging.Message{
+		Type: messaging.SocialTypes.UnFollowUser,
+		ToServices: []messaging.ServiceType{
+			messaging.TripService,
+			messaging.UserService,
+		},
+		Data: map[string]interface{}{
+			"follower":  followerID,
+			"following": targetUserID,
+		},
+		Critical: true,
+	}
+
+	// 3. RabbitMQ üzerinden yayınla
+	err = uc.rabbitClient.PublishMessage(ctx, updatedMessage)
+	if err != nil {
+		log.Printf("User update message could not be sent: %v", err)
+	}
+	return nil
 }
