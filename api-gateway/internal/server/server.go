@@ -81,6 +81,7 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		"/api/v1/social/unblock",
 		"/api/v1/social/follow-request",
 		"/api/v1/social/pending-requests",
+		"/api/v1/social/sent-follow-requests",
 	}
 	f.Use(middleware.AuthMiddleware(protectedPrefixes, sessionManager))
 

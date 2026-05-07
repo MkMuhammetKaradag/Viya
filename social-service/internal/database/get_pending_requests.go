@@ -46,10 +46,49 @@ func (r *Repository) GetPendingFollowRequests(ctx context.Context, userID uuid.U
 	var requests []domain.PendingRequest
 	for rows.Next() {
 		var req domain.PendingRequest
-		if err := rows.Scan(&req.FollowerID, &req.Username, &req.AvatarURL, &req.CreatedAt); err != nil {
+		if err := rows.Scan(&req.UserID, &req.Username, &req.AvatarURL, &req.CreatedAt); err != nil {
 			return nil, err
 		}
 		requests = append(requests, req)
 	}
+	return requests, nil
+}
+func (r *Repository) GetSentFollowRequests(ctx context.Context, userID uuid.UUID) ([]domain.PendingRequest, error) {
+	query := `
+        SELECT 
+            f.following_id, 
+            u.username, 
+            -- MANTIK: İstek attığım kişi gizli değilse avatarı gör, gizliyse varsayılanı dön.
+            -- (Zaten istek PENDING aşamasındaysa henüz kabul edilmemiş demektir)
+            CASE 
+                WHEN u.is_private = false THEN u.avatar_url
+                ELSE 'default_private_avatar.png'
+            END as avatar_url,
+            f.created_at
+        FROM follows f
+        JOIN users u ON f.following_id = u.id
+        WHERE f.follower_id = $1 AND f.status = 'PENDING'
+        ORDER BY f.created_at DESC
+    `
+
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []domain.PendingRequest
+	for rows.Next() {
+		var req domain.PendingRequest
+		if err := rows.Scan(&req.UserID, &req.Username, &req.AvatarURL, &req.CreatedAt); err != nil {
+			return nil, err
+		}
+		requests = append(requests, req)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return requests, nil
 }
