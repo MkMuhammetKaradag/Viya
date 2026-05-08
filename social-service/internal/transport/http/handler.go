@@ -18,6 +18,7 @@ type socialHandlers struct {
 
 	PendingRequests       *controller.PendingRequestsController
 	GetSentFollowRequests *controller.GetSentFollowRequestsController
+	GetPendingCount       *controller.GetPendingCountController
 	BlockUser             *controller.BlockUserController
 	UnblockUser           *controller.UnblockUserController
 }
@@ -32,6 +33,7 @@ func NewHandlers(repo domain.SocialRepository, rabbitClient domain.RabbitMQClien
 		FollowRequest:         controller.NewFollowRequestController(usecase.NewFollowRequestUseCase(repo, rabbitClient)),
 		PendingRequests:       controller.NewPendingRequestsController(usecase.NewPendingRequestsUseCase(repo)),
 		GetSentFollowRequests: controller.NewGetSentFollowRequestsController(usecase.NewGetSentFollowRequestsUseCase(repo)),
+		GetPendingCount:       controller.NewGetPendingCountController(usecase.NewGetPendingCountUseCase(repo)),
 	}
 
 	return &Handlers{

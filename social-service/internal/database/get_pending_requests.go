@@ -92,3 +92,17 @@ func (r *Repository) GetSentFollowRequests(ctx context.Context, userID uuid.UUID
 
 	return requests, nil
 }
+
+func (r *Repository) GetPendingFollowRequestsCount(ctx context.Context, userID uuid.UUID) (int, error) {
+	query := `
+        SELECT COUNT(*) 
+        FROM follows 
+        WHERE following_id = $1 AND status = 'PENDING'
+    `
+	var count int
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
