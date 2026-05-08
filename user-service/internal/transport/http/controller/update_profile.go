@@ -47,6 +47,7 @@ func (h *UpdateProfileController) Handle(fbrctx fiber.Ctx, req *UpdateProfileReq
 		IsPrivate:   req.ISPrivate,
 		Preferences: req.Preferences,
 	}
+
 	if err := h.usecase.Execute(fbrctx.Context(), userID, parans); err != nil {
 		return nil, err
 	}

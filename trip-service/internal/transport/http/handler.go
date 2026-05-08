@@ -14,13 +14,14 @@ type Handlers struct {
 }
 
 type tripHandlers struct {
-	Create          *controller.CreateTripController
-	Get             *controller.GetTripController
-	GetUserTrips    *controller.GetUserTripsController
-	GetMeTrips      *controller.GetMeTripsController
-	GetLikedTrips   *controller.GetLikedTripsController
-	GetExploreTrips *controller.GetExploreTripsController
-	ToggleTripLike  *controller.ToggleTripLikeController
+	Create           *controller.CreateTripController
+	Get              *controller.GetTripController
+	GetUserTrips     *controller.GetUserTripsController
+	GetMeTrips       *controller.GetMeTripsController
+	GetLikedTrips    *controller.GetLikedTripsController
+	GetExploreTrips  *controller.GetExploreTripsController
+	GetHomeFeedTrips *controller.GetHomeFeedTripsController
+	ToggleTripLike   *controller.ToggleTripLikeController
 }
 type commentHandlers struct {
 	Create            *controller.CreateCommentController
@@ -44,13 +45,14 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 	return &Handlers{
 		Trip: &tripHandlers{
 			// UseCase ve Controller birleşimi
-			Create:          controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
-			Get:             controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
-			GetUserTrips:    controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
-			GetMeTrips:      controller.NewGetMeTripsController(usecase.NewGetMeTripsUseCase(repo)),
-			GetExploreTrips: controller.NewGetExploreTripsController(usecase.NewGetExploreTripsUseCase(repo, worker)),
-			ToggleTripLike:  controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
-			GetLikedTrips:   controller.NewGetLikedTripsController(usecase.NewGetLikedTripsUseCase(repo)),
+			Create:           controller.NewCreateTripController(usecase.NewCreateTripUseCase(repo, worker)),
+			Get:              controller.NewGetTripController(usecase.NewGetTripUseCase(repo, worker)),
+			GetUserTrips:     controller.NewGetUserTripsController(usecase.NewGetUserTripsUseCase(repo)),
+			GetMeTrips:       controller.NewGetMeTripsController(usecase.NewGetMeTripsUseCase(repo)),
+			GetExploreTrips:  controller.NewGetExploreTripsController(usecase.NewGetExploreTripsUseCase(repo, worker)),
+			GetHomeFeedTrips: controller.NewGetHomeFeedTripsController(usecase.NewGetHomeFeedTripsUseCase(repo, worker)),
+			ToggleTripLike:   controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
+			GetLikedTrips:    controller.NewGetLikedTripsController(usecase.NewGetLikedTripsUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
 			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),

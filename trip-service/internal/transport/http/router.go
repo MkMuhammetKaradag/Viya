@@ -28,6 +28,7 @@ func (r *Router) Register(app *fiber.App) {
 		trips.Get("/me", handler.HandleWithFiber[controller.GetMeTripsRequest, controller.GetMeTripsResponse](h.Trip.GetMeTrips))
 
 		trips.Get("/explore", handler.HandleWithFiber[controller.GetExploreTripsRequest, controller.GetExploreTripsResponse](h.Trip.GetExploreTrips))
+		trips.Get("/home-feed", handler.HandleWithFiber[controller.GetHomeFeedTripsRequest, controller.GetHomeFeedTripsResponse](h.Trip.GetHomeFeedTrips))
 		trips.Get("/liked", handler.HandleWithFiber[controller.GetLikedTripsRequest, controller.GetLikedTripsResponse](h.Trip.GetLikedTrips))
 		trips.Patch("/:trip_id/like", handler.HandleWithFiber[controller.ToggleTripLikeRequest, controller.ToggleTripLikeResponse](h.Trip.ToggleTripLike))
 		trips.Get("/:trip_id", handler.HandleWithFiber[controller.GetTripRequest, controller.GetTripResponse](h.Trip.Get))

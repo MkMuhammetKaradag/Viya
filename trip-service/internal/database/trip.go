@@ -132,7 +132,62 @@ func (r *Repository) GetExploreTrips(ctx context.Context, userID uuid.UUID, limi
 
 	return trips, nil
 }
+func (r *Repository) GetHomeFeedTrips(ctx context.Context, userID uuid.UUID, limit, offset int) ([]domain.TripExploreDTO, error) {
+	query := `
+    SELECT 
+        t.id, t.user_id, t.title, t.cover_image_url, t.total_likes, t.total_comments, t.view_count, t.published_at,
+        u.username as owner_username,
+        u.avatar_url as owner_avatar,
+        (SELECT COUNT(*) FROM waypoints WHERE trip_id = t.id) as waypoint_count,
+        COALESCE(t.cover_image_url, (
+            SELECT p.url FROM photos p 
+            JOIN waypoints w ON p.waypoint_id = w.id 
+            WHERE w.trip_id = t.id 
+            ORDER BY w.order_index ASC, p.created_at ASC 
+            LIMIT 1
+        )) as display_image
+    FROM trips t
+    JOIN users u ON t.user_id = u.id
+    WHERE t.is_active = true 
+      AND t.is_public = true
+      -- 🚀  Sadece ben veya takip ettiğim kişiler
+      AND (
+          t.user_id = $1  -- Kendi gezilerim
+          OR t.user_id IN (
+              SELECT following_id FROM local_follows 
+              WHERE follower_id = $1 AND status = 'ACCEPTED'
+          )
+      )
+      -- Blok kontrolü (Güvenlik için her zaman olmalı)
+      AND NOT EXISTS (
+          SELECT 1 FROM local_blocks 
+          WHERE (blocker_id = $1 AND blocked_id = t.user_id) OR (blocker_id = t.user_id AND blocked_id = $1)
+      )
+    ORDER BY t.published_at DESC -- Ana sayfada genellikle en yeni olan en üsttedir
+    LIMIT $2 OFFSET $3;
+    `
 
+	rows, err := r.db.QueryContext(ctx, query, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("home feed query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var trips []domain.TripExploreDTO
+	for rows.Next() {
+		var t domain.TripExploreDTO
+		err := rows.Scan(
+			&t.ID, &t.UserID, &t.Title, &t.DisplayImage, &t.TotalLikes, &t.TotalComments, &t.ViewCount, &t.PublishedAt,
+			&t.OwnerUsername, &t.OwnerAvatar, &t.WaypointCount, &t.DisplayImage,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan home feed trip failed: %w", err)
+		}
+		trips = append(trips, t)
+	}
+
+	return trips, nil
+}
 func (r *Repository) ToggleTripLike(ctx context.Context, tripID, userID uuid.UUID) (bool, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
