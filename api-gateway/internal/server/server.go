@@ -60,6 +60,7 @@ func New(cfg *config.Config, sessionManager *session.SessionManager) *Server {
 		"/api/v1/trips/home-feed",
 		"/api/v1/trips",
 		"/api/v1/trips/:trip_id/like",
+		"/api/v1/trips/:trip_id/fork",
 		"/api/v1/waypoints",
 		"/api/v1/comments",
 		"/api/v1/comments/trip/:trip_id",

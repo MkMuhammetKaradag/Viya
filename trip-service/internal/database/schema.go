@@ -4,7 +4,8 @@ const (
 	createTripColon = `
         ALTER TABLE trips 
 		ADD COLUMN IF NOT EXISTS content_vector vector(768), 
-		
+		ADD COLUMN IF NOT EXISTS is_forkable BOOLEAN DEFAULT TRUE,
+        ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES trips(id) ON DELETE SET NULL,
 		ADD COLUMN IF NOT EXISTS location_name VARCHAR(255),
 		ADD COLUMN IF NOT EXISTS total_likes INTEGER DEFAULT 0,
 		ADD COLUMN IF NOT EXISTS total_comments INTEGER DEFAULT 0,
@@ -13,6 +14,11 @@ const (
 		ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES categories(id) ON DELETE SET NULL;
 		ALTER TABLE users
 		ADD COLUMN IF NOT EXISTS interest_vector vector(768),
+
+
+
+		
+
 		ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;
 		
 		`
@@ -33,6 +39,10 @@ const (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     cover_image_url TEXT, -- Rota için Cloudinary kapak fotoğrafı
+
+
+	parent_id UUID REFERENCES trips(id) ON DELETE SET NULL,
+	is_forkable BOOLEAN DEFAULT true,
     
     -- İstatistik ve Durum
     is_active BOOLEAN DEFAULT true,

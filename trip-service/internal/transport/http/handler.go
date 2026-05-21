@@ -22,6 +22,7 @@ type tripHandlers struct {
 	GetExploreTrips  *controller.GetExploreTripsController
 	GetHomeFeedTrips *controller.GetHomeFeedTripsController
 	ToggleTripLike   *controller.ToggleTripLikeController
+	ForkedTrip       *controller.ForkTripController
 }
 type commentHandlers struct {
 	Create            *controller.CreateCommentController
@@ -53,6 +54,7 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			GetHomeFeedTrips: controller.NewGetHomeFeedTripsController(usecase.NewGetHomeFeedTripsUseCase(repo, worker)),
 			ToggleTripLike:   controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
 			GetLikedTrips:    controller.NewGetLikedTripsController(usecase.NewGetLikedTripsUseCase(repo)),
+			ForkedTrip:       controller.NewForkTripController(usecase.NewForkTripUseCase(repo, worker)),
 		},
 		WayPoint: &waypointHandlers{
 			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),

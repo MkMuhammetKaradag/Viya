@@ -263,3 +263,130 @@ func (r *Repository) GetTripStatus(ctx context.Context, tripID uuid.UUID) (*doma
 
 	return &status, nil
 }
+
+func (r *Repository) ForkTrip(ctx context.Context, originalTripID uuid.UUID, forkUserID uuid.UUID) (uuid.UUID, error) {
+	// 1. TRANSACTION BAŞLATALIM
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to begin tx: %w", err)
+	}
+	// Hata durumunda rollback yapması için güvenceye alalım
+	defer tx.Rollback()
+
+	// 2. GÜVENLİK VE GİZLİLİK KONTROLÜ
+	// (Gezi aktif mi, public mi, forkable mı, engel var mı, gizli hesap mı kontrolü)
+	checkQuery := `
+		SELECT EXISTS (
+			SELECT 1 
+			FROM trips t
+			JOIN users u ON t.user_id = u.id
+			WHERE t.id = $1 AND t.is_active = true AND t.is_public = true AND t.is_forkable = true
+			AND NOT EXISTS (
+				SELECT 1 FROM local_blocks 
+				WHERE (blocker_id = $2 AND blocked_id = t.user_id) OR (blocker_id = t.user_id AND blocked_id = $2)
+			)
+			AND (
+				u.is_private = false OR t.user_id = $2
+				OR EXISTS (
+					SELECT 1 FROM local_follows 
+					WHERE follower_id = $2 AND following_id = t.user_id AND status = 'ACCEPTED'
+				)
+			)
+		);`
+
+	var isAllowed bool
+	err = tx.QueryRowContext(ctx, checkQuery, originalTripID, forkUserID).Scan(&isAllowed)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("privacy check failed: %w", err)
+	}
+	if !isAllowed {
+		return uuid.Nil, fmt.Errorf("action not allowed: trip is not forkable or privacy constraints violated")
+	}
+
+	// 3. ORİJİNAL GEZİ BİLGİLERİNİ ALALIM
+	getTripQuery := `
+		SELECT title, description, cover_image_url, location_name
+		FROM trips WHERE id = $1`
+
+	var title, description, locationName sql.NullString
+	var coverImageURL sql.NullString
+	err = tx.QueryRowContext(ctx, getTripQuery, originalTripID).Scan(&title, &description, &coverImageURL, &locationName)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to fetch original trip: %w", err)
+	}
+
+	// Forklanan gezinin başlığına bir işaret koyalım (Örn: "Ege Turu (Forked)")
+	forkedTitle := fmt.Sprintf("%s (Forked)", title.String)
+
+	// 4. YENİ GEZİ KAYDINI OLUŞTURMA (trips tablosuna insert)
+	newTripID := uuid.New()
+	insertTripQuery := `
+		INSERT INTO trips (id, user_id, parent_id, title, description, cover_image_url, location_name, is_forkable, is_public, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, true, false, true);` // Çatallanan geziyi varsayılan olarak gizli (is_public=false) başlatalım, kullanıcı isterse yayınlar
+
+	_, err = tx.ExecContext(ctx, insertTripQuery,
+		newTripID,
+		forkUserID,
+		originalTripID, // parent_id bağlantısı
+		forkedTitle,
+		description,
+		coverImageURL,
+		locationName,
+	)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert forked trip: %w", err)
+	}
+
+	// 5. WAYPOINT'LERİ KOPYALAMA (Fotoğraflar hariç!)
+	// Önce orijinal durakları çekiyoruz
+	getWaypointsQuery := `
+		SELECT title, description, order_index, latitude, longitude, note, category_id
+		FROM waypoints WHERE trip_id = $1 ORDER BY order_index ASC`
+
+	rows, err := tx.QueryContext(ctx, getWaypointsQuery, originalTripID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to fetch original waypoints: %w", err)
+	}
+
+	// Geçici bir struct tanımlayarak verileri hafızaya alalım
+	type tempWaypoint struct {
+		title, description, note sql.NullString
+		orderIndex               int
+		lat, lng                 float64
+		categoryID               uuid.NullUUID
+	}
+	var waypointList []tempWaypoint
+
+	// Okuma döngüsü
+	for rows.Next() {
+		var w tempWaypoint
+		err := rows.Scan(&w.title, &w.description, &w.orderIndex, &w.lat, &w.lng, &w.note, &w.categoryID)
+		if err != nil {
+			rows.Close() // Hata durumunda bağlantıyı hemen kapat
+			return uuid.Nil, fmt.Errorf("failed to scan waypoint: %w", err)
+		}
+		waypointList = append(waypointList, w)
+	}
+	rows.Close() // 🚀 KRİTİK NOKTA: Okuma bitti, bağlantıyı INSERT'ler için serbest bırakıyoruz!
+
+	// Şimdi temiz bağlantı üzerinden yeni durakları güvenle insert edebiliriz
+	insertWaypointQuery := `
+		INSERT INTO waypoints (id, title, description, order_index, trip_id, latitude, longitude, note, category_id)
+		VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)`
+
+	for _, w := range waypointList {
+		_, err = tx.ExecContext(ctx, insertWaypointQuery,
+			w.title, w.description, w.orderIndex, newTripID, w.lat, w.lng, w.note, w.categoryID,
+		)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to clone waypoint: %w", err)
+		}
+	}
+
+	// 6. HER ŞEY YOLUNDAYSA COMMIT
+	if err = tx.Commit(); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to commit tx: %w", err)
+	}
+
+	return newTripID, nil
+}
