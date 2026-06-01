@@ -47,5 +47,8 @@ type TripRepository interface {
 	GetCommentReplies(ctx context.Context, parentID uuid.UUID, page, limit int) ([]Comment, error)
 
 	ForkTrip(ctx context.Context, originalTripID uuid.UUID, forkUserID uuid.UUID) (uuid.UUID, error)
+
+	GetTripByID(ctx context.Context, id uuid.UUID) (*Trip, error)
+	UpdateTrip(ctx context.Context, trip *Trip) error
 	Close() error
 }

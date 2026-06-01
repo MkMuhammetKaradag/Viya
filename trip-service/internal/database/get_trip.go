@@ -41,8 +41,8 @@ func (r *Repository) GetTripWithWaypointsAndPhotos(ctx context.Context, tripID, 
 		var (
 			// Trip alanları
 			tID, tUserID                          uuid.UUID
-			tTitle, tDesc                         string
-			tCover                                *string
+			tTitle                                string
+			tCover, tDesc                         *string
 			tIsActive, tIsPublic, tIsLiked        bool
 			tPublished, tCreated                  time.Time
 			tViewCount, tLikeCount, tCommentCount int

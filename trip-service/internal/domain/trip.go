@@ -8,27 +8,62 @@ import (
 
 //(gis) PostGIS   unutma! not
 
+// type Trip struct {
+// 	ID            uuid.UUID `json:"id" db:"id"`
+// 	UserID        uuid.UUID `json:"user_id" db:"user_id"`
+// 	Title         string    `json:"title" db:"title"`
+// 	Description   string    `json:"description" db:"description"`
+// 	CoverImageURL *string   `json:"cover_image_url" db:"cover_image_url"`
+// 	IsActive      bool      `json:"is_active" db:"is_active"`
+// 	IsPublic      bool      `json:"is_public" db:"is_public"`
+// 	PublishedAt   time.Time `json:"published_at" db:"published_at"`
+// 	ViewCount     int       `json:"view_count" db:"view_count"`
+// 	LikeCount     int       `json:"like_count" db:"total_likes"`
+// 	CommentCount  int       `json:"comment_count" db:"total_comments"`
+
+// 	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
+// 	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
+// 	IsLiked     bool        `json:"is_liked"`
+// 	Waypoints   []Waypoint  `json:"waypoints,omitempty"`
+// 	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
+
+// 	CategoryNames []string `json:"category_names,omitempty"` // AI için isimleri burada tutacağız
+// 	LocationName  *string  `json:"location_name,omitempty" db:"location_name"`
+// }
+
 type Trip struct {
 	ID            uuid.UUID `json:"id" db:"id"`
 	UserID        uuid.UUID `json:"user_id" db:"user_id"`
 	Title         string    `json:"title" db:"title"`
-	Description   string    `json:"description" db:"description"`
+	Description   *string   `json:"description" db:"description"` // 🛠️ NULL gelebileceği için pointer yapıldı
 	CoverImageURL *string   `json:"cover_image_url" db:"cover_image_url"`
-	IsActive      bool      `json:"is_active" db:"is_active"`
-	IsPublic      bool      `json:"is_public" db:"is_public"`
-	PublishedAt   time.Time `json:"published_at" db:"published_at"`
-	ViewCount     int       `json:"view_count" db:"view_count"`
-	LikeCount     int       `json:"like_count" db:"total_likes"`
-	CommentCount  int       `json:"comment_count" db:"total_comments"`
+	LocationName  *string   `json:"location_name,omitempty" db:"location_name"`
 
-	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
-	IsLiked     bool        `json:"is_liked"`
-	Waypoints   []Waypoint  `json:"waypoints,omitempty"`
-	CategoryIDs []uuid.UUID `json:"category_ids,omitempty"`
+	// Forklama Mekanizması Alanları (Tabloyla eşitlendi 🚀)
+	ParentID   *uuid.UUID `json:"parent_id,omitempty" db:"parent_id"` // 🛠️ Yeni eklendi
+	IsForkable bool       `json:"is_forkable" db:"is_forkable"`       // 🛠️ Yeni eklendi
 
-	CategoryNames []string `json:"category_names,omitempty"` // AI için isimleri burada tutacağız
-	LocationName  *string  `json:"location_name,omitempty" db:"location_name"`
+	// Durum ve İstatistikler
+	IsActive     bool      `json:"is_active" db:"is_active"`
+	IsPublic     bool      `json:"is_public" db:"is_public"`
+	ViewCount    int       `json:"view_count" db:"view_count"`
+	LikeCount    int       `json:"like_count" db:"total_likes"`       // db tag'i tabloyla uyumlu
+	CommentCount int       `json:"comment_count" db:"total_comments"` // db tag'i tabloyla uyumlu
+	PublishedAt  time.Time `json:"published_at" db:"published_at"`
+
+	// Otomatik Zaman Alanları
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+
+	// İlişkisel ve Uygulama İçi Alanlar (Veritabanında direkt bu isimle kolon yok)
+	IsLiked       bool        `json:"is_liked"`
+	Waypoints     []Waypoint  `json:"waypoints,omitempty"`
+	CategoryIDs   []uuid.UUID `json:"category_ids,omitempty"`
+	CategoryNames []string    `json:"category_names,omitempty"`
+
+	// internal/domain/trip.go içindeki Trip struct'ının içine ekle:
+	StartDate *time.Time `json:"start_date,omitempty" db:"start_date"`
+	EndDate   *time.Time `json:"end_date,omitempty" db:"end_date"`
 }
 type Photo struct {
 	ID         uuid.UUID `json:"id" db:"id"`

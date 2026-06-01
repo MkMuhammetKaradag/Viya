@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"trip-service/internal/domain"
 
@@ -389,4 +390,94 @@ func (r *Repository) ForkTrip(ctx context.Context, originalTripID uuid.UUID, for
 	}
 
 	return newTripID, nil
+}
+func (r *Repository) GetTripByID(ctx context.Context, id uuid.UUID) (*domain.Trip, error) {
+	// Soft delete (deleted_at IS NULL) kontrolünü sorguya ekledik usta!
+	query := `
+		SELECT 
+			id, user_id, title, description, cover_image_url, 
+			parent_id, is_forkable, is_active, is_public, 
+			view_count, start_date, end_date, published_at, 
+			created_at, updated_at
+		FROM trips 
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	trip := &domain.Trip{}
+
+	// Nullable olabilecek alanlar için sql.NullX yapıları veya domain modelinde pointer kullanmalısın.
+	// Domain modelinde alanların pointer (*string, *time.Time) olduğunu varsayarak scan ediyoruz:
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&trip.ID,
+		&trip.UserID,
+		&trip.Title,
+		&trip.Description,   // domain.Trip içinde string veya pointer string
+		&trip.CoverImageURL, // *string
+		&trip.ParentID,      // *uuid.UUID
+		&trip.IsForkable,
+		&trip.IsActive,
+		&trip.IsPublic,
+		&trip.ViewCount,
+		&trip.StartDate, // *time.Time
+		&trip.EndDate,   // *time.Time
+		&trip.PublishedAt,
+		&trip.CreatedAt,
+		&trip.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("trip not found")
+		}
+		return nil, err
+	}
+
+	return trip, nil
+}
+
+func (r *Repository) UpdateTrip(ctx context.Context, trip *domain.Trip) error {
+	// updated_at = NOW() ekleyerek tablonun güncelliğini koruyoruz usta.
+	query := `
+		UPDATE trips 
+		SET 
+			title = $1, 
+			description = $2, 
+			cover_image_url = $3, 
+			is_forkable = $4, 
+			is_active = $5, 
+			is_public = $6, 
+			start_date = $7, 
+			end_date = $8, 
+			published_at = $9,
+			updated_at = NOW()
+		WHERE id = $10 AND user_id = $11 AND deleted_at IS NULL
+	`
+
+	result, err := r.db.ExecContext(ctx, query,
+		trip.Title,
+		trip.Description,
+		trip.CoverImageURL,
+		trip.IsForkable,
+		trip.IsActive,
+		trip.IsPublic,
+		trip.StartDate,
+		trip.EndDate,
+		trip.PublishedAt,
+		trip.ID,
+		trip.UserID, // 🛡️ Güvenlik için sorguda da user_id kontrolü yapıyoruz usta
+	)
+	if err != nil {
+		return err
+	}
+
+	// Etkilenen satır sayısını kontrol edelim (Gezinin silinmediğinden emin olmak için)
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("no trip was updated (either not found or unauthorized)")
+	}
+
+	return nil
 }

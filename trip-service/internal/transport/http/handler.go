@@ -23,6 +23,7 @@ type tripHandlers struct {
 	GetHomeFeedTrips *controller.GetHomeFeedTripsController
 	ToggleTripLike   *controller.ToggleTripLikeController
 	ForkedTrip       *controller.ForkTripController
+	Update           *controller.UpdateTripController
 }
 type commentHandlers struct {
 	Create            *controller.CreateCommentController
@@ -36,10 +37,10 @@ type categoryHandlers struct {
 type waypointHandlers struct {
 	Add *controller.AddWayPointController
 
-	//AddPhotos *controller.AddWayPointPhotosController
-	Delete  *controller.DeleteWaypointController
-	Reorder *controller.ReorderController
-	Update  *controller.UpdateWaypointController
+	AddPhotos *controller.AddWayPointPhotosController
+	Delete    *controller.DeleteWaypointController
+	Reorder   *controller.ReorderController
+	Update    *controller.UpdateWaypointController
 }
 
 func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker domain.Worker, moderationService domain.ModerationService) *Handlers {
@@ -55,13 +56,14 @@ func NewHandlers(repo domain.TripRepository, imgSvc domain.ImageService, worker 
 			ToggleTripLike:   controller.NewToggleTripLikeController(usecase.NewToggleTripLikeUseCase(repo, worker)),
 			GetLikedTrips:    controller.NewGetLikedTripsController(usecase.NewGetLikedTripsUseCase(repo)),
 			ForkedTrip:       controller.NewForkTripController(usecase.NewForkTripUseCase(repo, worker)),
+			Update:           controller.NewUpdateTripController(usecase.NewUpdateTripUseCase(repo)),
 		},
 		WayPoint: &waypointHandlers{
-			Add: controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),
-			//AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
-			Delete:  controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
-			Reorder: controller.NewReorderController(usecase.NewReorderUseCase(repo)),
-			Update:  controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
+			Add:       controller.NewAddWaypointController(usecase.NewAddWayPointUseCase(repo, worker)),
+			AddPhotos: controller.NewAddWayPointPhotosController(usecase.NewAddWayPointPhotosUseCase(repo, imgSvc, worker)),
+			Delete:    controller.NewDeleteWaypointController(usecase.NewDeleteWaypointUseCase(repo)),
+			Reorder:   controller.NewReorderController(usecase.NewReorderUseCase(repo)),
+			Update:    controller.NewUpdateWaypointController(usecase.NewUpdateWaypointUseCase(repo)),
 		},
 		Category: &categoryHandlers{
 			Search: controller.NewSearchCategoriesController(usecase.NewSearchCategoriesUseCase(repo)),

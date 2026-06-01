@@ -12,7 +12,7 @@ import (
 // Hibrit yapıyı destekleyen yeni Request DTO'su
 type CreateTripRequest struct {
 	Title         string     `json:"title" validate:"required,min=3"`
-	Desc          string     `json:"desc,omitempty"`
+	Desc          *string    `json:"desc,omitempty"`
 	CoverImageURL *string    `json:"cover_image_url,omitempty"`
 	IsPublic      bool       `json:"is_public"`
 	PublishedAt   *time.Time `json:"published_at,omitempty"`
